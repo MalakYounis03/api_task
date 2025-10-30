@@ -2,8 +2,6 @@ import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class AuthService extends GetxController {
-  static AuthService get instance => Get.find();
-
   final RxBool isLoggedIn = false.obs;
   final RxString token = ''.obs;
 

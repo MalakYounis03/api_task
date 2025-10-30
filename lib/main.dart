@@ -1,4 +1,5 @@
-import 'package:api_task/app/modules/login/controllers/auth_service.dart';
+import 'package:api_task/app/api_service/api_services.dart';
+import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
@@ -11,7 +12,7 @@ void main() async {
   await Hive.initFlutter();
   await Hive.openBox('auth');
   Get.put(AuthService());
-
+  Get.put(ApiServices());
   runApp(MyApp());
 }
 
@@ -25,6 +26,7 @@ class MyApp extends StatelessWidget {
       title: "Application",
       initialRoute: AppPages.initialRoute,
       getPages: AppPages.routes,
+      theme: ThemeData(fontFamily: "Cairo"),
     );
   }
 }

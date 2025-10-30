@@ -1,4 +1,4 @@
-import 'package:api_task/app/modules/login/controllers/auth_service.dart';
+import 'package:api_task/app/service/auth_service.dart';
 import 'package:get/get.dart';
 
 import '../controllers/login_controller.dart';

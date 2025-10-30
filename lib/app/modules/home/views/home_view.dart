@@ -1,5 +1,4 @@
-import 'package:api_task/app/modules/home/views/widgets/custom_icon.dart';
-import 'package:api_task/app/modules/login/controllers/auth_service.dart';
+import 'package:api_task/app/service/auth_service.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_button.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text.dart';
 import 'package:api_task/app/routes/app_pages.dart';
@@ -14,14 +13,19 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 80,
-        backgroundColor: Colors.green[100],
-        title: CustomText(text: "Home", color: Colors.white, fontSize: 25),
+        backgroundColor: Color(0xFF443C42),
+        title: CustomText(text: "الرئيسية", color: Colors.white, fontSize: 25),
         centerTitle: true,
         actionsPadding: EdgeInsets.all(10),
-        leading: CustomIcon(
-          icon: Icons.add_comment,
-          onTap: () {
+        leading: IconButton(
+          style: IconButton.styleFrom(
+            padding: EdgeInsets.all(0),
+            backgroundColor: Colors.white,
+            minimumSize: Size(32, 32),
+            fixedSize: Size(32, 32),
+          ),
+          icon: Icon(Icons.add_comment, size: 20, color: Color(0xff71B24D)),
+          onPressed: () {
             Get.bottomSheet(
               Container(
                 height: 600,
@@ -74,9 +78,15 @@ class HomeView extends GetView<HomeController> {
           },
         ),
         actions: [
-          CustomIcon(
-            icon: Icons.logout,
-            onTap: () async {
+          IconButton(
+            style: IconButton.styleFrom(
+              padding: EdgeInsets.all(0),
+              backgroundColor: Colors.white,
+              minimumSize: Size(32, 32),
+              fixedSize: Size(32, 32),
+            ),
+            icon: Icon(Icons.logout, size: 20, color: Color(0xff71B24D)),
+            onPressed: () async {
               final authService = Get.find<AuthService>();
               await authService.logout();
               Get.offAllNamed(Routes.LOGIN);
@@ -102,56 +112,48 @@ class HomeView extends GetView<HomeController> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage(post.user.imageUrl),
-                  ),
-                  const SizedBox(width: 10),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              post.user.username,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            Text(
-                              '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundImage: NetworkImage(post.user.imageUrl),
                         ),
-                        const SizedBox(height: 8),
                         Text(
-                          post.content,
+                          post.user.username,
                           style: TextStyle(
-                            fontSize: 13,
-                            height: 1.5,
-                            color: Colors.grey,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
                           ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(width: 140),
+
+                        Text(
+                          '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}',
+                          style: TextStyle(color: Colors.grey, fontSize: 11),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      post.content,
+                      style: TextStyle(
+                        fontSize: 13,
+                        height: 1.5,
+                        color: Colors.grey,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             );
           },

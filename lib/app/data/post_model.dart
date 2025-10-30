@@ -4,7 +4,7 @@ class PostModel {
   final String id;
   final String content;
   final DateTime createdAt;
-  final UserModel user;
+  UserModel user;
 
   PostModel({
     required this.id,

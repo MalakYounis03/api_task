@@ -1,13 +1,8 @@
-import 'package:api_task/app/data/api_services.dart';
-import 'package:api_task/app/modules/login/controllers/auth_service.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_button.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text_form_filed.dart';
-import 'package:api_task/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
-
 import '../controllers/login_controller.dart';
 
 class LoginView extends GetView<LoginController> {
@@ -51,25 +46,15 @@ class LoginView extends GetView<LoginController> {
                     controller: controller.passwordController,
                   ),
                   SizedBox(height: 50),
-                  CustomButton(
-                    text: "Login",
-                    onPressed: () async {
-                      if (controller.formKey.currentState!.validate()) {
-                        try {
-                          final String token = await ApiServices.login(
-                            email: controller.emailController.text,
-                            password: controller.passwordController.text,
-                          );
-                          final authService = Get.find<AuthService>();
-                          await authService.saveToken(token);
-
-                          Get.offAllNamed(Routes.HOME);
-                        } catch (e) {
-                          Get.snackbar('Error', e.toString());
-                        }
-                      }
-                    },
-                  ),
+                  Obx(() {
+                    if (controller.isLoading.value) {
+                      return CustomButton(text: "loading", onPressed: () {});
+                    }
+                    return CustomButton(
+                      text: "Login",
+                      onPressed: () => controller.login(),
+                    );
+                  }),
                 ],
               ),
             ),
