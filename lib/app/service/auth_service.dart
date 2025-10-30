@@ -1,3 +1,4 @@
+import 'package:api_task/app/data/user_model.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -14,6 +15,7 @@ class AuthService extends GetxController {
   Future<void> _initFromBox() async {
     final box = Hive.box('auth');
     final savedToken = box.get('token', defaultValue: '') as String;
+
     if (savedToken.isNotEmpty) {
       token.value = savedToken;
       isLoggedIn.value = true;
@@ -35,5 +37,10 @@ class AuthService extends GetxController {
     await box.delete('token');
     token.value = '';
     isLoggedIn.value = false;
+  }
+
+  Future<void> saveUser(UserModel user) async {
+    final box = Hive.box('auth');
+    box.put('user', user);
   }
 }
