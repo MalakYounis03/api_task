@@ -18,7 +18,7 @@ class PostModel {
       id: json['id'],
       content: json['content'],
       createdAt: DateTime.parse(json['createdAt']),
-      user: UserModel.fromJson(json['user']),
+      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
     );
   }
 }
