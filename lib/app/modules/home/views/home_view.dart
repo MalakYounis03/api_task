@@ -89,11 +89,11 @@ class HomeView extends GetView<HomeController> {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundImage: NetworkImage(post.user.imageUrl),
+                    backgroundImage: NetworkImage(post.user!.imageUrl),
                   ),
                   SizedBox(width: 12),
                   Text(
-                    post.user.username,
+                    post.user!.username,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],

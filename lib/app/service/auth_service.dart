@@ -17,14 +17,12 @@ class AuthService extends GetxController {
   Future<void> _initFromBox() async {
     final box = Hive.box('auth');
     final savedToken = box.get('token') as String;
-    final savedUser = box.get('user') as UserModel?;
+    final savedUser = box.get('user') as UserModel;
     if (savedToken.isNotEmpty) {
       token.value = savedToken;
       isLoggedIn.value = true;
     }
-    if (savedUser != null) {
-      user.value = savedUser;
-    }
+    user.value = savedUser;
   }
 
   Future<void> saveLoginData(String newToken, UserModel newUser) async {

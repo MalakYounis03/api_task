@@ -1,6 +1,5 @@
 import 'package:api_task/app/api_service/api_services.dart';
 import 'package:api_task/app/data/post_model.dart';
-import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
@@ -38,7 +37,6 @@ class HomeController extends GetxController {
     }
     try {
       final apiServices = Get.find<ApiServices>();
-      final authService = Get.find<AuthService>();
       print('DEBUG addPost: sending content: "$content"');
 
       final PostModel created = await apiServices.createPost(content: content);
@@ -49,7 +47,6 @@ class HomeController extends GetxController {
         id: created.id,
         content: created.content,
         createdAt: created.createdAt,
-        user: authService.user.value!,
       );
 
       print('DEBUG addPost: created successfully - id: ${created.id}');
