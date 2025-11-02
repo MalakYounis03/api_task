@@ -15,12 +15,12 @@ class AppPages {
 
   static final routes = [
     GetPage(
-      name: _Paths.HOME,
+      name: _Paths.home,
       page: () => const HomeView(),
       binding: HomeBinding(),
     ),
     GetPage(
-      name: _Paths.LOGIN,
+      name: _Paths.login,
       page: () => const LoginView(),
       binding: LoginBinding(),
     ),
@@ -28,6 +28,6 @@ class AppPages {
 
   static String get initialRoute {
     final authService = Get.find<AuthService>();
-    return authService.isLoggedIn.value ? Routes.HOME : Routes.LOGIN;
+    return authService.isLoggedIn.value ? Routes.home : Routes.login;
   }
 }

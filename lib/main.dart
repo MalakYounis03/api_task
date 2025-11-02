@@ -1,4 +1,5 @@
 import 'package:api_task/app/api_service/api_services.dart';
+import 'package:api_task/app/data/user_model.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -9,10 +10,15 @@ import 'app/routes/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Hive.initFlutter();
+  Hive.registerAdapter(UserModelAdapter());
+
   await Hive.openBox('auth');
+
   Get.put(AuthService());
   Get.put(ApiServices());
+
   runApp(MyApp());
 }
 
@@ -26,7 +32,27 @@ class MyApp extends StatelessWidget {
       title: "Application",
       initialRoute: AppPages.initialRoute,
       getPages: AppPages.routes,
-      theme: ThemeData(fontFamily: "Cairo"),
+      theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
+        fontFamily: "Cairo",
+        appBarTheme: AppBarThemeData(
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            color: Colors.white,
+            fontFamily: 'Cairo',
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Color(0xFF71B24D),
+            elevation: 0,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+      ),
     );
   }
 }

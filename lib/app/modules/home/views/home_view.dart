@@ -1,6 +1,6 @@
+import 'package:api_task/app/data/post_model.dart';
+import 'package:api_task/app/modules/home/views/widgets/create_post_sheet.dart';
 import 'package:api_task/app/service/auth_service.dart';
-import 'package:api_task/app/modules/login/views/widgets/custom_button.dart';
-import 'package:api_task/app/modules/login/views/widgets/custom_text.dart';
 import 'package:api_task/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,8 +14,7 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF443C42),
-        title: CustomText(text: "الرئيسية", color: Colors.white, fontSize: 25),
-        centerTitle: true,
+        title: Text('الرئيسية'),
         actionsPadding: EdgeInsets.all(10),
         leading: IconButton(
           style: IconButton.styleFrom(
@@ -26,55 +25,7 @@ class HomeView extends GetView<HomeController> {
           ),
           icon: Icon(Icons.add_comment, size: 20, color: Color(0xff71B24D)),
           onPressed: () {
-            Get.bottomSheet(
-              Container(
-                height: 600,
-                padding: EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomText(
-                      text: 'Add Post',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                    CustomText(
-                      text: controller.posts[0].user.username,
-                      alignment: Alignment.topLeft,
-                      fontSize: 16,
-                    ),
-                    Divider(),
-                    SizedBox(height: 20),
-
-                    TextField(
-                      maxLines: 5,
-
-                      decoration: InputDecoration(
-                        hintText: 'Write details here ..',
-                        border: InputBorder.none,
-                      ),
-                    ),
-
-                    SizedBox(height: 200),
-
-                    CustomButton(
-                      text: "Add",
-                      onPressed: () {
-                        Get.back();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            );
+            Get.bottomSheet(CreatePostSheet(controller: controller));
           },
         ),
         actions: [
@@ -89,76 +40,77 @@ class HomeView extends GetView<HomeController> {
             onPressed: () async {
               final authService = Get.find<AuthService>();
               await authService.logout();
-              Get.offAllNamed(Routes.LOGIN);
+              Get.offAllNamed(Routes.login);
             },
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return Center(child: CircularProgressIndicator());
-        }
+      body: SafeArea(
+        child: Obx(() {
+          final items = controller.posts;
 
-        if (controller.posts.isEmpty) {
-          return Center(child: Text('No posts available'));
-        }
+          if (controller.isLoading.value) {
+            return Center(child: CircularProgressIndicator());
+          }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: controller.posts.length,
-          itemBuilder: (context, index) {
-            final post = controller.posts[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(16),
+          if (controller.posts.isEmpty) {
+            return Center(child: Text('No posts available'));
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(12),
+            itemCount: controller.posts.length,
+            itemBuilder: (context, index) {
+              final PostModel post = items[index];
+
+              return createPost(post);
+            },
+            separatorBuilder: (context, index) => SizedBox(height: 12),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget createPost(PostModel post) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundImage: NetworkImage(post.user.imageUrl),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    post.user.username,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
-              child: Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundImage: NetworkImage(post.user.imageUrl),
-                        ),
-                        Text(
-                          post.user.username,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        SizedBox(width: 140),
-
-                        Text(
-                          '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}',
-                          style: TextStyle(color: Colors.grey, fontSize: 11),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      post.content,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.5,
-                        color: Colors.grey,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+              Text(
+                '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}',
+                style: TextStyle(fontSize: 12, color: Color(0xFF828282)),
               ),
-            );
-          },
-        );
-      }),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            post.content,
+            style: TextStyle(fontSize: 14, color: Color(0xFF828282)),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
-import 'package:api_task/app/modules/login/views/widgets/custom_button.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text_form_filed.dart';
+import 'package:api_task/components/async_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/login_controller.dart';
@@ -27,10 +27,10 @@ class LoginView extends GetView<LoginController> {
               fontSize: 14,
             ),
             SizedBox(height: 30),
-
             Form(
               key: controller.formKey,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   CustomTextFormFiled(
                     text: "Email",
@@ -46,15 +46,10 @@ class LoginView extends GetView<LoginController> {
                     controller: controller.passwordController,
                   ),
                   SizedBox(height: 50),
-                  Obx(() {
-                    if (controller.isLoading.value) {
-                      return CustomButton(text: "loading", onPressed: () {});
-                    }
-                    return CustomButton(
-                      text: "Login",
-                      onPressed: () => controller.login(),
-                    );
-                  }),
+                  AsyncButton(
+                    text: "Login",
+                    onPressed: () => controller.login(),
+                  ),
                 ],
               ),
             ),
