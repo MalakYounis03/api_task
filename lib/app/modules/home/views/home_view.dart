@@ -73,6 +73,10 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget createPost(PostModel post) {
+    final authService = Get.find<AuthService>();
+
+    final savedUser = authService.user.value;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -89,11 +93,13 @@ class HomeView extends GetView<HomeController> {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundImage: NetworkImage(post.user!.imageUrl),
+                    backgroundImage: NetworkImage(
+                      post.user?.imageUrl ?? savedUser!.imageUrl,
+                    ),
                   ),
                   SizedBox(width: 12),
                   Text(
-                    post.user!.username,
+                    post.user?.username ?? savedUser!.username,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],
