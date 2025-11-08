@@ -5,7 +5,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 class AuthService extends GetxController {
   final RxBool isLoggedIn = false.obs;
   final RxString token = ''.obs;
-
   final Rxn<UserModel> user = Rxn<UserModel>();
 
   @override
@@ -16,13 +15,14 @@ class AuthService extends GetxController {
 
   Future<void> _initFromBox() async {
     final box = Hive.box('auth');
+    if (box.containsKey('token')) return;
+    if (box.containsKey('user')) return;
     final savedToken = box.get('token') as String;
     final savedUser = box.get('user') as UserModel;
-    if (savedToken.isNotEmpty) {
-      token.value = savedToken;
-      isLoggedIn.value = true;
-    }
+
     user.value = savedUser;
+    token.value = savedToken;
+    isLoggedIn.value = true;
   }
 
   Future<void> saveLoginData(String newToken, UserModel newUser) async {

@@ -1,5 +1,8 @@
 import 'package:api_task/app/api_service/api_services.dart';
+import 'package:api_task/app/api_service/end_points.dart';
 import 'package:api_task/app/data/post_model.dart';
+import 'package:api_task/app/modules/home/model/add_post_response.dart';
+import 'package:api_task/app/modules/home/model/home_response.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
@@ -7,6 +10,7 @@ class HomeController extends GetxController {
   var posts = <PostModel>[].obs;
   var isLoading = false.obs;
   TextEditingController postController = TextEditingController();
+  final apiService = Get.find<ApiServices>();
 
   @override
   void onInit() {
@@ -15,17 +19,18 @@ class HomeController extends GetxController {
   }
 
   Future<void> fetchPosts() async {
-    try {
-      isLoading.value = true;
-      final apiService = Get.find<ApiServices>();
+    isLoading.value = true;
 
-      final List<PostModel> fetchedPosts = await apiService.getPosts();
-      posts.assignAll(fetchedPosts);
+    try {
+      final response = await apiService.get(
+        endPoint: EndPoints.getPosts,
+        fromJson: HomeResponse.fromJson,
+      );
+      posts.value = response.posts;
     } catch (e) {
       Get.snackbar('Error', 'Failed to load posts: $e');
-    } finally {
-      isLoading.value = false;
     }
+    isLoading.value = false;
   }
 
   Future<void> addPost() async {
@@ -36,22 +41,13 @@ class HomeController extends GetxController {
       return;
     }
     try {
-      final apiServices = Get.find<ApiServices>();
-      print('DEBUG addPost: sending content: "$content"');
-
-      final PostModel created = await apiServices.createPost(content: content);
-
-      print('DEBUG addPost: created successfully - id: ${created.id}');
-
-      final PostModel postWithUser = PostModel(
-        id: created.id,
-        content: created.content,
-        createdAt: created.createdAt,
+      final response = await apiService.post(
+        endPoint: EndPoints.addPost,
+        body: {'content': content},
+        fromJson: AddPostResponse.fromJson,
       );
 
-      print('DEBUG addPost: created successfully - id: ${created.id}');
-
-      posts.add(postWithUser);
+      posts.add(response.post);
       posts.refresh();
 
       postController.clear();
@@ -60,7 +56,6 @@ class HomeController extends GetxController {
 
       Get.snackbar('Success', 'Post added successfully');
     } catch (e) {
-      print('DEBUG addPost ERROR: $e');
       Get.snackbar('Error', 'Failed to add post: $e');
     }
   }
