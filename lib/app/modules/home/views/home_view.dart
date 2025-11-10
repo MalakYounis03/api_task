@@ -14,7 +14,12 @@ class HomeView extends GetView<HomeController> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF443C42),
-        title: Text('الرئيسية'),
+        title: TextButton(
+          onPressed: () {
+            Get.toNamed(Routes.users);
+          },
+          child: Text("Show All Users"),
+        ),
         actionsPadding: EdgeInsets.all(10),
         leading: IconButton(
           style: IconButton.styleFrom(
@@ -57,15 +62,24 @@ class HomeView extends GetView<HomeController> {
             return Center(child: Text('No posts available'));
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.all(12),
-            itemCount: controller.posts.length,
-            itemBuilder: (context, index) {
-              final PostModel post = items[index];
+          return RefreshIndicator(
+            onRefresh: controller.fetchPosts,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(12),
+              itemCount: controller.posts.length,
+              itemBuilder: (context, index) {
+                final PostModel post = items[index];
 
-              return createPost(post);
-            },
-            separatorBuilder: (context, index) => SizedBox(height: 12),
+                return Dismissible(
+                  key: Key(post.id),
+                  child: createPost(post),
+                  onDismissed: (direction) async {
+                    await controller.deletePost(post.id);
+                  },
+                );
+              },
+              separatorBuilder: (context, index) => SizedBox(height: 12),
+            ),
           );
         }),
       ),
@@ -73,10 +87,6 @@ class HomeView extends GetView<HomeController> {
   }
 
   Widget createPost(PostModel post) {
-    final authService = Get.find<AuthService>();
-
-    final savedUser = authService.user.value;
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -93,13 +103,11 @@ class HomeView extends GetView<HomeController> {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundImage: NetworkImage(
-                      post.user?.imageUrl ?? savedUser!.imageUrl,
-                    ),
+                    backgroundImage: NetworkImage(post.user.imageUrl),
                   ),
                   SizedBox(width: 12),
                   Text(
-                    post.user?.username ?? savedUser!.username,
+                    post.user.username,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ],

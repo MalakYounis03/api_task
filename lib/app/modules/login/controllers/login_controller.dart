@@ -29,8 +29,6 @@ class LoginController extends GetxController {
       await authService.saveLoginData(response.token, response.user);
       Get.offAllNamed(Routes.home);
     } catch (e) {
-      print(e);
-
       Get.snackbar('Error', e.toString());
     }
   }

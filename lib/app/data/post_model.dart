@@ -4,13 +4,13 @@ class PostModel {
   final String id;
   final String content;
   final DateTime createdAt;
-  UserModel? user;
+  final UserModel user;
 
   PostModel({
     required this.id,
     required this.content,
     required this.createdAt,
-    this.user,
+    required this.user,
   });
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
@@ -18,7 +18,7 @@ class PostModel {
       id: json['id'],
       content: json['content'],
       createdAt: DateTime.parse(json['createdAt']),
-      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+      user: UserModel.fromJson(json['user']),
     );
   }
 }

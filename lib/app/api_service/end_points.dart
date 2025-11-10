@@ -4,7 +4,8 @@ enum EndPoints {
   login,
   getPosts,
   addPost,
-  getUsers;
+  getUsers,
+  deletePost;
 
   String get path {
     return switch (this) {
@@ -12,6 +13,7 @@ enum EndPoints {
       EndPoints.getPosts => 'post',
       EndPoints.addPost => 'post',
       EndPoints.getUsers => 'user',
+      EndPoints.deletePost => 'post',
     };
   }
 
