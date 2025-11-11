@@ -5,10 +5,8 @@ import 'package:api_task/components/async_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class CreatePostSheet extends StatelessWidget {
-  const CreatePostSheet({super.key, required this.controller});
-
-  final HomeController controller;
+class CreatePostSheet extends GetView<HomeController> {
+  const CreatePostSheet({super.key});
 
   @override
   Widget build(BuildContext context) {

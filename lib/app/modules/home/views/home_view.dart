@@ -30,7 +30,7 @@ class HomeView extends GetView<HomeController> {
           ),
           icon: Icon(Icons.add_comment, size: 20, color: Color(0xff71B24D)),
           onPressed: () {
-            Get.bottomSheet(CreatePostSheet(controller: controller));
+            Get.bottomSheet(CreatePostSheet());
           },
         ),
         actions: [
