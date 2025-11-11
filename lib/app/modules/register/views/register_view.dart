@@ -1,5 +1,6 @@
 import 'package:api_task/app/modules/login/views/widgets/custom_text.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text_form_filed.dart';
+import 'package:api_task/app/routes/app_pages.dart';
 import 'package:api_task/components/async_button.dart';
 import 'package:flutter/material.dart';
 
@@ -30,7 +31,7 @@ class RegisterView extends GetView<RegisterController> {
             ),
             SizedBox(height: 30),
             Form(
-              key: controller.formKey,
+              key: controller.formKeyRegister,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -55,8 +56,28 @@ class RegisterView extends GetView<RegisterController> {
                   ),
                   SizedBox(height: 50),
                   AsyncButton(
-                    text: "Login",
+                    text: "Register",
                     onPressed: () => controller.register(),
+                  ),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomText(
+                        text: "Already have an account? ",
+                        fontSize: 14,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Get.offNamed(Routes.login);
+                        },
+                        child: CustomText(
+                          text: "Login",
+                          fontSize: 14,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

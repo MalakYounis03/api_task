@@ -10,12 +10,12 @@ class RegisterController extends GetxController {
   TextEditingController usernameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+  final formKeyRegister = GlobalKey<FormState>();
   var isLoading = false.obs;
   final apiService = Get.find<ApiServices>();
   final authService = Get.find<AuthService>();
   Future<void> register() async {
-    if (!formKey.currentState!.validate()) return;
+    if (!formKeyRegister.currentState!.validate()) return;
 
     try {
       final response = await apiService.post(

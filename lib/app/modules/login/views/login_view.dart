@@ -58,7 +58,7 @@ class LoginView extends GetView<LoginController> {
                       CustomText(text: "Don't have an account? ", fontSize: 14),
                       GestureDetector(
                         onTap: () {
-                          Get.toNamed(Routes.register);
+                          Get.offNamed(Routes.register);
                         },
                         child: CustomText(
                           text: "Register",
