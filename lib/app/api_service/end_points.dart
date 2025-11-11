@@ -2,6 +2,7 @@ import 'package:api_task/app/api_service/api_services.dart';
 
 enum EndPoints {
   login,
+  register,
   getPosts,
   addPost,
   getUsers,
@@ -9,6 +10,7 @@ enum EndPoints {
 
   String get path {
     return switch (this) {
+      EndPoints.register => 'auth/register',
       EndPoints.login => 'auth/login',
       EndPoints.getPosts => 'post',
       EndPoints.addPost => 'post',

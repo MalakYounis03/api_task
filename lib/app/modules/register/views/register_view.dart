@@ -1,13 +1,14 @@
 import 'package:api_task/app/modules/login/views/widgets/custom_text.dart';
 import 'package:api_task/app/modules/login/views/widgets/custom_text_form_filed.dart';
-import 'package:api_task/app/routes/app_pages.dart';
 import 'package:api_task/components/async_button.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../controllers/login_controller.dart';
 
-class LoginView extends GetView<LoginController> {
-  const LoginView({super.key});
+import 'package:get/get.dart';
+
+import '../controllers/register_controller.dart';
+
+class RegisterView extends GetView<RegisterController> {
+  const RegisterView({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,7 +18,7 @@ class LoginView extends GetView<LoginController> {
           children: [
             SizedBox(height: 128),
             CustomText(
-              text: "login",
+              text: "Register",
               fontSize: 22,
               color: Colors.black,
               fontWeight: FontWeight.bold,
@@ -34,6 +35,12 @@ class LoginView extends GetView<LoginController> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   CustomTextFormFiled(
+                    text: "Name",
+                    hintText: "Name here",
+                    icon: Icons.person,
+                    controller: controller.usernameController,
+                  ),
+                  CustomTextFormFiled(
                     text: "Email",
                     hintText: "Email here",
                     icon: Icons.email,
@@ -49,24 +56,7 @@ class LoginView extends GetView<LoginController> {
                   SizedBox(height: 50),
                   AsyncButton(
                     text: "Login",
-                    onPressed: () => controller.login(),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CustomText(text: "Don't have an account? ", fontSize: 14),
-                      GestureDetector(
-                        onTap: () {
-                          Get.toNamed(Routes.register);
-                        },
-                        child: CustomText(
-                          text: "Register",
-                          fontSize: 14,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
+                    onPressed: () => controller.register(),
                   ),
                 ],
               ),
