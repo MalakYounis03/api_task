@@ -34,9 +34,19 @@ class UsersView extends GetView<UsersController> {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final user = items[index];
-                return ListTile(
-                  title: Text(user.username),
-                  subtitle: Text(user.email),
+                return Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    border: Border.all(color: Colors.black12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(user.imageUrl),
+                    ),
+                    title: Text(user.username),
+                    subtitle: Text(user.email),
+                  ),
                 );
               },
               separatorBuilder: (context, index) => SizedBox(height: 12),

@@ -19,15 +19,12 @@ class UsersController extends GetxController {
     isLoading.value = true;
 
     try {
-      print('Fetching users...');
       final response = await apiService.get(
         endPoint: EndPoints.getUsers,
         fromJson: UsersResponse.fromJson,
       );
-      print('Users fetched successfully: ${response.users}');
       users.value = response.users;
     } catch (e) {
-      print('Error fetching users: $e');
       Get.snackbar('Error', 'Failed to load users: $e');
     }
     isLoading.value = false;

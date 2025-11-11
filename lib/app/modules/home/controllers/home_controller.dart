@@ -48,7 +48,7 @@ class HomeController extends GetxController {
         fromJson: AddPostResponse.fromJson,
       );
 
-      posts.add(response.post);
+      posts.insert(0, response.post);
       posts.refresh();
 
       postController.clear();

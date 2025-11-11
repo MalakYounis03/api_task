@@ -15,8 +15,11 @@ class AuthService extends GetxController {
 
   Future<void> _initFromBox() async {
     final box = Hive.box('auth');
-    if (box.containsKey('token')) return;
-    if (box.containsKey('user')) return;
+
+    if (!box.containsKey('token') || !box.containsKey('user')) {
+      return;
+    }
+
     final savedToken = box.get('token') as String;
     final savedUser = box.get('user') as UserModel;
 
