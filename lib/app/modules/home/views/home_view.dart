@@ -1,5 +1,5 @@
 import 'package:api_task/app/data/post_model.dart';
-import 'package:api_task/app/modules/home/views/widgets/create_post_sheet.dart';
+import 'package:api_task/app/modules/home/views/widgets/custom_drawer.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:api_task/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +12,7 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       appBar: AppBar(
         backgroundColor: Color(0xFF443C42),
         title: TextButton(
@@ -21,18 +22,7 @@ class HomeView extends GetView<HomeController> {
           child: Text("Show All Users"),
         ),
         actionsPadding: EdgeInsets.all(10),
-        leading: IconButton(
-          style: IconButton.styleFrom(
-            padding: EdgeInsets.all(0),
-            backgroundColor: Colors.white,
-            minimumSize: Size(32, 32),
-            fixedSize: Size(32, 32),
-          ),
-          icon: Icon(Icons.add_comment, size: 20, color: Color(0xff71B24D)),
-          onPressed: () {
-            Get.bottomSheet(CreatePostSheet());
-          },
-        ),
+
         actions: [
           IconButton(
             style: IconButton.styleFrom(
