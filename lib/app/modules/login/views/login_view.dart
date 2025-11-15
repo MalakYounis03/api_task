@@ -17,14 +17,14 @@ class LoginView extends GetView<LoginController> {
           children: [
             SizedBox(height: 128),
             CustomText(
-              text: "login",
+              text: "login".tr,
               fontSize: 22,
               color: Colors.black,
               fontWeight: FontWeight.bold,
             ),
             SizedBox(height: 10),
             CustomText(
-              text: "Please Enter Your Email And Password ",
+              text: "Please Enter Your Email And Password ".tr,
               fontSize: 14,
             ),
             SizedBox(height: 30),
@@ -34,34 +34,37 @@ class LoginView extends GetView<LoginController> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   CustomTextFormFiled(
-                    text: "Email",
-                    hintText: "Email here",
+                    text: "Email".tr,
+                    hintText: "Email here".tr,
                     icon: Icons.email,
                     controller: controller.emailController,
                   ),
                   SizedBox(height: 15),
                   CustomTextFormFiled(
-                    text: "Password",
-                    hintText: "Password here",
+                    text: "Password".tr,
+                    hintText: "Password here".tr,
                     icon: Icons.password,
                     controller: controller.passwordController,
                   ),
                   SizedBox(height: 50),
                   AsyncButton(
-                    text: "Login",
+                    text: "Login".tr,
                     onPressed: () => controller.login(),
                   ),
                   SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CustomText(text: "Don't have an account? ", fontSize: 14),
+                      CustomText(
+                        text: "Don't have an account? ".tr,
+                        fontSize: 14,
+                      ),
                       GestureDetector(
                         onTap: () {
                           Get.offNamed(Routes.register);
                         },
                         child: CustomText(
-                          text: "Register",
+                          text: "Register".tr,
                           fontSize: 14,
                           color: Colors.blue,
                         ),

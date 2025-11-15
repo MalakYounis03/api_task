@@ -1,6 +1,9 @@
 import 'package:api_task/app/api_service/api_services.dart';
 import 'package:api_task/app/data/user_model.dart';
+import 'package:api_task/app/lang/app_translations.dart';
 import 'package:api_task/app/service/auth_service.dart';
+import 'package:api_task/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
@@ -12,6 +15,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Hive.initFlutter();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   Hive.registerAdapter(UserModelAdapter());
 
   await Hive.openBox('auth');
@@ -29,6 +34,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
+
+      translations: AppTranslations(),
+
+      locale: const Locale('ar'),
+
       title: "Application",
       initialRoute: AppPages.initialRoute,
       getPages: AppPages.routes,

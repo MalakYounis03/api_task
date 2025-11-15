@@ -29,7 +29,7 @@ class CreatePostSheet extends GetView<HomeController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             CustomText(
-              text: 'Add Post',
+              text: 'Add Post'.tr,
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Colors.black,
@@ -65,7 +65,7 @@ class CreatePostSheet extends GetView<HomeController> {
                     controller: controller.postController,
                     maxLines: 7,
                     decoration: InputDecoration(
-                      hintText: 'Write details here ..',
+                      hintText: 'Write details here'.tr,
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.all(0),
                     ),
@@ -75,7 +75,7 @@ class CreatePostSheet extends GetView<HomeController> {
             ),
             SizedBox(height: 32),
             AsyncButton(
-              text: "Add",
+              text: "Add".tr,
               onPressed: () async {
                 await controller.addPost();
               },

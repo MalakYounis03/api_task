@@ -7,7 +7,7 @@ abstract class Routes {
   static const users = _Paths.users;
   static const register = _Paths.register;
   static const chats = _Paths.chats;
-  static const CHAT_DETAILS = _Paths.CHAT_DETAILS;
+  static const chatDetails = _Paths.chatDetails;
 }
 
 abstract class _Paths {
@@ -17,5 +17,5 @@ abstract class _Paths {
   static const users = '/users';
   static const register = '/register';
   static const chats = '/chats';
-  static const CHAT_DETAILS = '/chat-details';
+  static const chatDetails = '/chat-details';
 }

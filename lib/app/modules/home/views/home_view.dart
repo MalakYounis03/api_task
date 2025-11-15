@@ -17,7 +17,7 @@ class HomeView extends GetView<HomeController> {
       appBar: AppBar(
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Color(0xFF443C42),
-        title: Text('Home', style: TextStyle(fontSize: 18)),
+        title: Text('Home'.tr, style: TextStyle(fontSize: 18)),
         actionsPadding: EdgeInsets.all(10),
 
         actions: [
@@ -41,7 +41,7 @@ class HomeView extends GetView<HomeController> {
         child: Obx(() {
           final items = controller.posts;
 
-          if (controller.isLoading.value) {
+          if (controller.isLoading.value && items.isEmpty) {
             return Center(child: CircularProgressIndicator());
           }
 
@@ -80,35 +80,35 @@ class HomeView extends GetView<HomeController> {
         color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: NetworkImage(post.user.imageUrl),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage(post.user.imageUrl),
-                  ),
-                  SizedBox(width: 12),
                   Text(
                     post.user.username,
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
+
+                  Text(
+                    post.content,
+                    style: TextStyle(fontSize: 14, color: Color(0xFF828282)),
+                  ),
                 ],
-              ),
-              Text(
-                '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}',
-                style: TextStyle(fontSize: 12, color: Color(0xFF828282)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
           Text(
-            post.content,
-            style: TextStyle(fontSize: 14, color: Color(0xFF828282)),
+            '${post.createdAt.day}/${post.createdAt.month}/${post.createdAt.year}',
+            style: TextStyle(fontSize: 12, color: Color(0xFF828282)),
           ),
         ],
       ),

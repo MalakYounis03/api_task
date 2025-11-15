@@ -46,8 +46,8 @@ class AppPages {
       binding: ChatsBinding(),
     ),
     GetPage(
-      name: _Paths.CHAT_DETAILS,
-      page: () => const ChatDetailsView(),
+      name: _Paths.chatDetails,
+      page: () => ChatDetailsView(),
       binding: ChatDetailsBinding(),
     ),
   ];

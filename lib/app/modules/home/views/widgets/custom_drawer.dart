@@ -16,8 +16,8 @@ class CustomDrawer extends GetView<HomeController> {
 
     return Container(
       padding: EdgeInsets.symmetric(vertical: 70, horizontal: 10),
-      color: Color(0xFF2F2A2D),
-      width: 200,
+      color: Color(0xFF443C42),
+      width: 228,
       child: Column(
         children: [
           Row(
@@ -39,7 +39,7 @@ class CustomDrawer extends GetView<HomeController> {
           SizedBox(height: 15),
           ListTile(
             leading: Icon(Icons.add_comment, size: 20, color: Colors.white),
-            title: Text('Create Post', style: TextStyle(color: Colors.white)),
+            title: Text('Add Post'.tr, style: TextStyle(color: Colors.white)),
             onTap: () {
               Get.back();
               Get.bottomSheet(CreatePostSheet());
@@ -48,7 +48,7 @@ class CustomDrawer extends GetView<HomeController> {
           SizedBox(height: 10),
           ListTile(
             leading: Icon(Icons.chat, size: 20, color: Colors.white),
-            title: Text('Chats', style: TextStyle(color: Colors.white)),
+            title: Text('Chats'.tr, style: TextStyle(color: Colors.white)),
             onTap: () {
               Get.back();
               Get.toNamed(Routes.chats);
@@ -56,7 +56,7 @@ class CustomDrawer extends GetView<HomeController> {
           ),
           ListTile(
             leading: Icon(Icons.people, size: 20, color: Colors.white),
-            title: Text('All users', style: TextStyle(color: Colors.white)),
+            title: Text('All Users'.tr, style: TextStyle(color: Colors.white)),
             onTap: () {
               Get.back();
               Get.toNamed(Routes.users);
