@@ -13,14 +13,11 @@ class HomeView extends GetView<HomeController> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: CustomDrawer(),
+
       appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Color(0xFF443C42),
-        title: TextButton(
-          onPressed: () {
-            Get.toNamed(Routes.users);
-          },
-          child: Text("Show All Users"),
-        ),
+        title: Text('Home', style: TextStyle(fontSize: 18)),
         actionsPadding: EdgeInsets.all(10),
 
         actions: [
