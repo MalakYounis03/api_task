@@ -1,3 +1,5 @@
+import 'package:api_task/app/routes/app_pages.dart';
+import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
@@ -8,6 +10,9 @@ class UsersView extends GetView<UsersController> {
   const UsersView({super.key});
   @override
   Widget build(BuildContext context) {
+    final authService = Get.find<AuthService>();
+    final savedUser = authService.user.value;
+    final currentUserId = savedUser!.id;
     return Scaffold(
       appBar: AppBar(
         title: const Text('All Users'),
@@ -41,6 +46,21 @@ class UsersView extends GetView<UsersController> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: ListTile(
+                    onTap: () {
+                      if (user.id == currentUserId) {
+                        Get.snackbar('Info', 'You cannot chat with yourself');
+                        return;
+                      }
+
+                      Get.toNamed(
+                        Routes.chatDetails,
+                        arguments: {
+                          "otherUserId": user.id,
+                          "name": user.username,
+                          "imageUrl": user.imageUrl,
+                        },
+                      );
+                    },
                     leading: CircleAvatar(
                       backgroundImage: NetworkImage(user.imageUrl),
                     ),

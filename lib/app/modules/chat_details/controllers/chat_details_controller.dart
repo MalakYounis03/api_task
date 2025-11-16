@@ -4,7 +4,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'dart:async';
-import 'package:flutter/widgets.dart';
 
 class ChatDetailsController extends GetxController {
   final db = FirebaseDatabase.instance.ref();
@@ -15,6 +14,10 @@ class ChatDetailsController extends GetxController {
   late final String otherName;
   late final String otherUserId;
   late final String currentUserId;
+  late final String currentUserName;
+  late final String currentUserImage;
+  late final String otherUserImage;
+
   final messages = <ChatMessage>[].obs;
   final isLoading = false.obs;
   final ScrollController scrollController = ScrollController();
@@ -25,8 +28,11 @@ class ChatDetailsController extends GetxController {
     final args = Get.arguments as Map;
     otherUserId = args["otherUserId"];
     otherName = args["name"];
+    otherUserImage = args["imageUrl"];
     final savedUser = authService.user.value;
     currentUserId = savedUser!.id;
+    currentUserName = savedUser.username;
+    currentUserImage = savedUser.imageUrl;
     chatId = buildChatId(currentUserId, otherUserId);
     fetchMessages();
     _listenToNewMessages();
@@ -118,12 +124,16 @@ class ChatDetailsController extends GetxController {
       "lastMessage": lastMessage,
       "lastMessageTime": lastMessageTime,
       "lastMessageAuthor": senderId,
+      "name": otherName,
+      "imageUrl": otherUserImage,
     });
 
     await db.child("list-of-chats/$otherUserId/$currentUserId").update({
       "lastMessage": lastMessage,
       "lastMessageTime": lastMessageTime,
       "lastMessageAuthor": senderId,
+      "name": currentUserName,
+      "imageUrl": currentUserImage,
     });
   }
 

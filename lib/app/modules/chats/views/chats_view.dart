@@ -37,6 +37,7 @@ class ChatsView extends GetView<ChatsController> {
             final chat = chats[index];
             final String lastAuthorId = chat["lastMessageAuthor"];
             final String otherName = chat["name"];
+
             final String currentUserId = savedUser!.id;
             String senderName;
 
@@ -59,6 +60,7 @@ class ChatsView extends GetView<ChatsController> {
                     arguments: {
                       "otherUserId": chat["otherUserId"],
                       "name": chat["name"],
+                      "imageUrl": chat["imageUrl"],
                     },
                   );
                 },
