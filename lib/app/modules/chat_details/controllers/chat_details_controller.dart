@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'dart:async';
+import 'package:flutter/widgets.dart';
 
 class ChatDetailsController extends GetxController {
   final db = FirebaseDatabase.instance.ref();
@@ -12,21 +13,36 @@ class ChatDetailsController extends GetxController {
   StreamSubscription<DatabaseEvent>? _messagesSubscription;
   late final String chatId;
   late final String otherName;
+  late final String otherUserId;
   late final String currentUserId;
   final messages = <ChatMessage>[].obs;
   final isLoading = false.obs;
+  final ScrollController scrollController = ScrollController();
 
   @override
   void onInit() {
     super.onInit();
     final args = Get.arguments as Map;
-    final String otherUserId = args["otherUserId"];
+    otherUserId = args["otherUserId"];
     otherName = args["name"];
     final savedUser = authService.user.value;
     currentUserId = savedUser!.id;
     chatId = buildChatId(currentUserId, otherUserId);
     fetchMessages();
     _listenToNewMessages();
+  }
+
+  void scrollToBottom() {
+    if (!scrollController.hasClients) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scrollController.hasClients) return;
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   String buildChatId(String id1, String id2) {
@@ -66,6 +82,7 @@ class ChatDetailsController extends GetxController {
       }
 
       messages.assignAll(temp);
+      scrollToBottom();
     } finally {
       isLoading.value = false;
     }
@@ -83,8 +100,31 @@ class ChatDetailsController extends GetxController {
       "message": text,
       "messageTime": newMessageTime,
     });
-
+    await _updateChatSummary(
+      lastMessage: text,
+      lastMessageTime: newMessageTime,
+      senderId: currentUserId,
+    );
     messageController.clear();
+    scrollToBottom();
+  }
+
+  Future<void> _updateChatSummary({
+    required String lastMessage,
+    required int lastMessageTime,
+    required String senderId,
+  }) async {
+    await db.child("list-of-chats/$currentUserId/$otherUserId").update({
+      "lastMessage": lastMessage,
+      "lastMessageTime": lastMessageTime,
+      "lastMessageAuthor": senderId,
+    });
+
+    await db.child("list-of-chats/$otherUserId/$currentUserId").update({
+      "lastMessage": lastMessage,
+      "lastMessageTime": lastMessageTime,
+      "lastMessageAuthor": senderId,
+    });
   }
 
   void _listenToNewMessages() {

@@ -1,29 +1,62 @@
+import 'package:api_task/app/service/auth_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 
 class ChatsController extends GetxController {
   final db = FirebaseDatabase.instance.ref();
+  final authService = Get.find<AuthService>();
 
-  Future<List<Map<String, dynamic>>> fetchChats(String userId) async {
-    final snapshot = await db.child("list-of-chats/$userId").get();
+  final chats = <Map<String, dynamic>>[].obs;
 
-    List<Map<String, dynamic>> chats = [];
+  final isLoading = false.obs;
+  StreamSubscription<DatabaseEvent>? _chatsSub;
 
-    if (snapshot.exists) {
-      final list = snapshot.value as Map;
-
-      list.forEach((otherUserId, chatData) {
-        chats.add({
-          "otherUserId": otherUserId,
-          "name": chatData["name"],
-          "imageUrl": chatData["imageUrl"],
-          "lastMessage": chatData["lastMessage"],
-          "lastMessageTime": chatData["lastMessageTime"],
-          "lastMessageAuthor": chatData["lastMessageAuthor"],
-        });
-      });
+  @override
+  void onInit() {
+    super.onInit();
+    final savedUser = authService.user.value;
+    if (savedUser != null) {
+      _listenToChats(savedUser.id);
     }
+  }
 
-    return chats;
+  void _listenToChats(String userId) {
+    isLoading.value = true;
+
+    _chatsSub = db.child("list-of-chats/$userId").onValue.listen((event) {
+      final temp = <Map<String, dynamic>>[];
+
+      if (event.snapshot.exists && event.snapshot.value != null) {
+        final data = event.snapshot.value as Map<dynamic, dynamic>;
+
+        data.forEach((otherUserId, chatData) {
+          final map = chatData as Map<dynamic, dynamic>;
+          temp.add({
+            "otherUserId": otherUserId,
+            "name": map["name"],
+            "imageUrl": map["imageUrl"],
+            "lastMessage": map["lastMessage"],
+            "lastMessageTime": map["lastMessageTime"],
+            "lastMessageAuthor": map["lastMessageAuthor"],
+          });
+        });
+
+        temp.sort((a, b) {
+          final aTime = a["lastMessageTime"] as int? ?? 0;
+          final bTime = b["lastMessageTime"] as int? ?? 0;
+          return bTime.compareTo(aTime);
+        });
+      }
+
+      chats.assignAll(temp);
+      isLoading.value = false;
+    });
+  }
+
+  @override
+  void onClose() {
+    _chatsSub?.cancel();
+    super.onClose();
   }
 }

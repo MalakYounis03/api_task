@@ -29,6 +29,7 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
             const SizedBox(height: 8),
             Expanded(
               child: ListView.separated(
+                controller: controller.scrollController,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,

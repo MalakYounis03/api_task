@@ -21,81 +21,78 @@ class ChatsView extends GetView<ChatsController> {
         backgroundColor: Color(0xFF443C42),
         title: Text('Chats'.tr, style: TextStyle(fontSize: 18)),
       ),
-      body: FutureBuilder(
-        future: controller.fetchChats(savedUser!.id),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
+      body: Obx(() {
+        final chats = controller.chats;
 
-          final chats = snapshot.data!;
+        if (controller.isLoading.value && chats.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          return ListView.builder(
-            itemCount: chats.length,
-            itemBuilder: (context, index) {
-              final chat = chats[index];
-              final String lastAuthorId = chat["lastMessageAuthor"];
-              final String otherName = chat["name"];
-              final String currentUserId = savedUser.id;
-              String senderName;
+        if (chats.isEmpty) {
+          return const Center(child: Text("No chats yet"));
+        }
+        return ListView.builder(
+          itemCount: chats.length,
+          itemBuilder: (context, index) {
+            final chat = chats[index];
+            final String lastAuthorId = chat["lastMessageAuthor"];
+            final String otherName = chat["name"];
+            final String currentUserId = savedUser!.id;
+            String senderName;
 
-              if (lastAuthorId == currentUserId) {
-                senderName = "You";
-              } else {
-                senderName = otherName;
-              }
+            if (lastAuthorId == currentUserId) {
+              senderName = "You";
+            } else {
+              senderName = otherName;
+            }
 
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ListTile(
+                onTap: () {
+                  Get.toNamed(
+                    Routes.chatDetails,
+                    arguments: {
+                      "otherUserId": chat["otherUserId"],
+                      "name": chat["name"],
+                    },
+                  );
+                },
+                leading: CircleAvatar(
+                  backgroundImage: NetworkImage(chat["imageUrl"]),
                 ),
-                child: ListTile(
-                  onTap: () {
-                    Get.toNamed(
-                      Routes.chatDetails,
-                      arguments: {
-                        "otherUserId": chat["otherUserId"],
-                        "name": chat["name"],
-                      },
-                    );
-                  },
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(chat["imageUrl"]),
-                  ),
-                  title: Text(chat["name"]),
-                  subtitle: Row(
-                    children: [
-                      Text("$senderName : "),
-                      Text(chat["lastMessage"]),
-                    ],
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        DateFormat('h:mm a').format(
-                          DateTime.fromMillisecondsSinceEpoch(
-                            chat["lastMessageTime"] * 1000,
-                          ),
+                title: Text(chat["name"]),
+                subtitle: Row(
+                  children: [Text("$senderName : "), Text(chat["lastMessage"])],
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      DateFormat('h:mm a').format(
+                        DateTime.fromMillisecondsSinceEpoch(
+                          chat["lastMessageTime"] * 1000,
                         ),
                       ),
-                      Text(
-                        DateFormat('MMM d').format(
-                          DateTime.fromMillisecondsSinceEpoch(
-                            chat["lastMessageTime"] * 1000,
-                          ),
+                    ),
+                    Text(
+                      DateFormat('MMM d').format(
+                        DateTime.fromMillisecondsSinceEpoch(
+                          chat["lastMessageTime"] * 1000,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          );
-        },
-      ),
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }
