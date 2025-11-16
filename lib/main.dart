@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
 
       translations: AppTranslations(),
 
-      locale: const Locale('ar'),
+      locale: const Locale('en'),
 
       title: "Application",
       initialRoute: AppPages.initialRoute,

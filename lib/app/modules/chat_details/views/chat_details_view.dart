@@ -2,6 +2,7 @@ import 'package:api_task/app/modules/chat_details/controllers/chat_details_contr
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class ChatDetailsView extends GetView<ChatDetailsController> {
   const ChatDetailsView({super.key});
@@ -28,7 +29,6 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
             const SizedBox(height: 8),
             Expanded(
               child: ListView.separated(
-                reverse: true,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
@@ -73,7 +73,11 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        msgs[index].messageTime.toString(),
+                        DateFormat('h:mm a').format(
+                          DateTime.fromMillisecondsSinceEpoch(
+                            msgs[index].messageTime * 1000,
+                          ),
+                        ),
                         style: TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
@@ -93,7 +97,7 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
   }
 }
 
-class _InputBar extends StatelessWidget {
+class _InputBar extends GetView<ChatDetailsController> {
   const _InputBar();
 
   @override
@@ -117,13 +121,16 @@ class _InputBar extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              onPressed: () {},
+              onPressed: () {
+                controller.sendMessages();
+              },
               icon: const Icon(Icons.send, size: 22),
               color: const Color(0xFF4CAF50),
             ),
             const SizedBox(width: 6),
             Expanded(
               child: TextField(
+                controller: controller.messageController,
                 decoration: InputDecoration(
                   hintText: 'Write your message'.tr,
                   border: InputBorder.none,
