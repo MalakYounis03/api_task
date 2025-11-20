@@ -5,10 +5,10 @@ import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 class ChatsView extends GetView<ChatsController> {
   const ChatsView({super.key});
+
   @override
   Widget build(BuildContext context) {
     final authService = Get.find<AuthService>();
@@ -31,64 +31,37 @@ class ChatsView extends GetView<ChatsController> {
         if (chats.isEmpty) {
           return const Center(child: Text("No chats yet"));
         }
-        return ListView.builder(
+
+        return ListView.separated(
           itemCount: chats.length,
+          padding: EdgeInsets.all(16),
+          separatorBuilder: (context, index) => SizedBox(height: 12),
           itemBuilder: (context, index) {
             final chat = chats[index];
-            final String lastAuthorId = chat["lastMessageAuthor"];
-            final String otherName = chat["name"];
 
             final String currentUserId = savedUser!.id;
-            String senderName;
+            final String senderName;
 
-            if (lastAuthorId == currentUserId) {
+            if (chat.lastMessageAuthor == currentUserId) {
               senderName = "You";
             } else {
-              senderName = otherName;
+              senderName = chat.name;
             }
 
             return Container(
-              padding: const EdgeInsets.all(12),
+              clipBehavior: Clip.hardEdge,
               decoration: BoxDecoration(
                 color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: ListTile(
-                onTap: () {
-                  Get.toNamed(
-                    Routes.chatDetails,
-                    arguments: {
-                      "otherUserId": chat["otherUserId"],
-                      "name": chat["name"],
-                      "imageUrl": chat["imageUrl"],
-                    },
-                  );
-                },
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(chat["imageUrl"]),
-                ),
-                title: Text(chat["name"]),
-                subtitle: Row(
-                  children: [Text("$senderName : "), Text(chat["lastMessage"])],
-                ),
+                onTap: () => Get.toNamed(Routes.chatDetails, arguments: {"chat": chat}),
+                leading: CircleAvatar(backgroundImage: NetworkImage(chat.imageUrl)),
+                title: Text(chat.name),
+                subtitle: Text("$senderName: ${chat.lastMessage}"),
                 trailing: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      DateFormat('h:mm a').format(
-                        DateTime.fromMillisecondsSinceEpoch(
-                          chat["lastMessageTime"] * 1000,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      DateFormat('MMM d').format(
-                        DateTime.fromMillisecondsSinceEpoch(
-                          chat["lastMessageTime"] * 1000,
-                        ),
-                      ),
-                    ),
-                  ],
+                  children: [Text(chat.formattedTime), Text(chat.formattedDate)],
                 ),
               ),
             );

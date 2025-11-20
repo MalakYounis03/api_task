@@ -1,4 +1,5 @@
 import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
+import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/widgets.dart';
@@ -8,48 +9,101 @@ import 'dart:async';
 class ChatDetailsController extends GetxController {
   final db = FirebaseDatabase.instance.ref();
   final authService = Get.find<AuthService>();
+
   final messageController = TextEditingController();
+
   StreamSubscription<DatabaseEvent>? _messagesSubscription;
+
+  late final user = authService.user.value!;
   late final String chatId;
-  late final String otherName;
-  late final String otherUserId;
-  late final String currentUserId;
-  late final String currentUserName;
-  late final String currentUserImage;
-  late final String otherUserImage;
+
+  final Chat chat = Get.arguments['chat'];
 
   final messages = <ChatMessage>[].obs;
+
   final isLoading = false.obs;
+
   final ScrollController scrollController = ScrollController();
 
   @override
-  void onInit() {
+  void onInit() async {
     super.onInit();
-    final args = Get.arguments as Map;
-    otherUserId = args["otherUserId"];
-    otherName = args["name"];
-    otherUserImage = args["imageUrl"];
-    final savedUser = authService.user.value;
-    currentUserId = savedUser!.id;
-    currentUserName = savedUser.username;
-    currentUserImage = savedUser.imageUrl;
-    chatId = buildChatId(currentUserId, otherUserId);
-    fetchMessages();
+
+    chatId = buildChatId(user.id, chat.otherUserId);
+
+    await _fetchMessages();
     _listenToNewMessages();
   }
 
-  void scrollToBottom() {
-    if (!scrollController.hasClients) return;
+  Future<void> _fetchMessages() async {
+    isLoading.value = true;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!scrollController.hasClients) return;
-      scrollController.animateTo(
-        scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+    try {
+      final event = await db
+          .child("chat-details/$chatId/messages")
+          .orderByChild('messageTime')
+          .once(DatabaseEventType.value);
+
+      final childs = event.snapshot.children.toList();
+
+      for (var child in childs) {
+        final message = ChatMessage.fromMap(child.key ?? '', child.value as Map<dynamic, dynamic>);
+        messages.add(message);
+      }
+
+      scrollToBottom();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _listenToNewMessages() {
+    _messagesSubscription = db
+        .child("chat-details/$chatId/messages")
+        .orderByChild('messageTime')
+        .startAfter(key: 'messageTime', messages.lastOrNull?.messageTime)
+        .onChildAdded
+        .listen((event) {
+          final msgData = event.snapshot.value as Map<dynamic, dynamic>;
+
+          final newMessage = ChatMessage.fromMap(event.snapshot.key ?? '', msgData);
+
+          messages.add(newMessage);
+
+          scrollToBottom();
+        });
+  }
+
+  Future<void> sendMessages() async {
+    final text = messageController.text.trim();
+
+    if (text.isEmpty) return;
+
+    final newMessageRef = db.child("chat-details/$chatId/messages").push();
+    final newMessageTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+
+    messageController.clear();
+
+    await newMessageRef.set({"senderId": user.id, "message": text, "messageTime": newMessageTime});
+
+    await db.child("list-of-chats/${user.id}/${chat.lastMessageAuthor}").update({
+      "lastMessage": text,
+      "lastMessageTime": newMessageTime,
+      "lastMessageAuthor": user.id,
+      "name": chat.name,
+      "imageUrl": chat.imageUrl,
+    });
+
+    await db.child("list-of-chats/${chat.lastMessageAuthor}/${user.id}").update({
+      "lastMessage": text,
+      "lastMessageTime": newMessageTime,
+      "lastMessageAuthor": user.id,
+      "name": user.username,
+      "imageUrl": user.imageUrl,
     });
   }
+
+  //
 
   String buildChatId(String id1, String id2) {
     final ids = [id1, id2];
@@ -58,103 +112,13 @@ class ChatDetailsController extends GetxController {
     return reversed.join('____');
   }
 
-  Future<void> fetchMessages() async {
-    isLoading.value = true;
+  void scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scrollController.hasClients) return;
 
-    try {
-      final snapshot = await db.child("chat-details/$chatId/messages").get();
-
-      print("**********chatId********************");
-      print(chatId);
-      print("**********snapshot********************");
-      print(snapshot.value);
-
-      final temp = <ChatMessage>[];
-
-      if (snapshot.exists && snapshot.value != null) {
-        final data = snapshot.value as Map<dynamic, dynamic>;
-
-        data.forEach((msgId, msgData) {
-          final msgMap = msgData as Map<dynamic, dynamic>;
-          temp.add(ChatMessage.fromMap(msgId as String, msgMap));
-          print("**********id********************");
-          print(msgId);
-          print("**********data********************");
-
-          print(msgMap);
-        });
-
-        temp.sort((a, b) => a.messageTime.compareTo(b.messageTime));
-      }
-
-      messages.assignAll(temp);
-      scrollToBottom();
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> sendMessages() async {
-    final text = messageController.text.trim();
-    if (text.isEmpty) return;
-
-    final newMessageRef = db.child("chat-details/$chatId/messages").push();
-    final newMessageTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-
-    await newMessageRef.set({
-      "senderId": currentUserId,
-      "message": text,
-      "messageTime": newMessageTime,
+      final position = scrollController.position.maxScrollExtent;
+      scrollController.animateTo(position, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     });
-    await _updateChatSummary(
-      lastMessage: text,
-      lastMessageTime: newMessageTime,
-      senderId: currentUserId,
-    );
-    messageController.clear();
-    scrollToBottom();
-  }
-
-  Future<void> _updateChatSummary({
-    required String lastMessage,
-    required int lastMessageTime,
-    required String senderId,
-  }) async {
-    await db.child("list-of-chats/$currentUserId/$otherUserId").update({
-      "lastMessage": lastMessage,
-      "lastMessageTime": lastMessageTime,
-      "lastMessageAuthor": senderId,
-      "name": otherName,
-      "imageUrl": otherUserImage,
-    });
-
-    await db.child("list-of-chats/$otherUserId/$currentUserId").update({
-      "lastMessage": lastMessage,
-      "lastMessageTime": lastMessageTime,
-      "lastMessageAuthor": senderId,
-      "name": currentUserName,
-      "imageUrl": currentUserImage,
-    });
-  }
-
-  void _listenToNewMessages() {
-    _messagesSubscription = db
-        .child("chat-details/$chatId/messages")
-        .onChildAdded
-        .listen((event) {
-          if (!event.snapshot.exists || event.snapshot.value == null) return;
-          final msgId = event.snapshot.key;
-          if (msgId == null) return;
-
-          final msgData = event.snapshot.value as Map<dynamic, dynamic>;
-          final alreadyExists = messages.any((msg) => msg.id == msgId);
-          if (alreadyExists) return;
-
-          final newMessage = ChatMessage.fromMap(msgId, msgData);
-
-          messages.add(newMessage);
-          messages.sort((a, b) => a.messageTime.compareTo(b.messageTime));
-        });
   }
 
   @override
