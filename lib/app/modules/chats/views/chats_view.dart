@@ -1,0 +1,73 @@
+import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
+import 'package:api_task/app/routes/app_pages.dart';
+import 'package:api_task/app/service/auth_service.dart';
+
+import 'package:flutter/material.dart';
+
+import 'package:get/get.dart';
+
+class ChatsView extends GetView<ChatsController> {
+  const ChatsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = Get.find<AuthService>();
+
+    final savedUser = authService.user.value;
+
+    return Scaffold(
+      appBar: AppBar(
+        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: Color(0xFF443C42),
+        title: Text('Chats'.tr, style: TextStyle(fontSize: 18)),
+      ),
+      body: Obx(() {
+        final chats = controller.chats;
+
+        if (controller.isLoading.value && chats.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (chats.isEmpty) {
+          return const Center(child: Text("No chats yet"));
+        }
+
+        return ListView.separated(
+          itemCount: chats.length,
+          padding: EdgeInsets.all(16),
+          separatorBuilder: (context, index) => SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final chat = chats[index];
+
+            final String currentUserId = savedUser!.id;
+            final String senderName;
+
+            if (chat.lastMessageAuthor == currentUserId) {
+              senderName = "You";
+            } else {
+              senderName = chat.name;
+            }
+
+            return Container(
+              clipBehavior: Clip.hardEdge,
+              decoration: BoxDecoration(
+                color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ListTile(
+                onTap: () => Get.toNamed(Routes.chatDetails, arguments: {"chat": chat}),
+                leading: CircleAvatar(backgroundImage: NetworkImage(chat.imageUrl)),
+                title: Text(chat.name),
+                subtitle: Text("$senderName: ${chat.lastMessage}"),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [Text(chat.formattedTime), Text(chat.formattedDate)],
+                ),
+              ),
+            );
+          },
+        );
+      }),
+    );
+  }
+}
