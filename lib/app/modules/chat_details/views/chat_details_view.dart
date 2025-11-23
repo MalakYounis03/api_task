@@ -12,91 +12,118 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF443C42),
-        iconTheme: IconThemeData(color: Colors.white),
         title: Text(
           controller.chat.name,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final msgs = controller.messages;
+      body: controller.obx(
+        (msgs) {
+          final messages = msgs ?? [];
 
-        return Column(
-          children: [
-            const SizedBox(height: 8),
-            Expanded(
-              child: ListView.separated(
-                controller: controller.scrollController,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                physics: const BouncingScrollPhysics(),
-                itemBuilder: (context, index) {
-                  final msgs = controller.messages;
+          return Column(
+            children: [
+              const SizedBox(height: 8),
+              Expanded(
+                child: ListView.separated(
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final msg =
+                        messages[messages.length - 1 - index]; // القراءة بالعكس
 
-                  final isMe =
-                      msgs[index].senderId ==
-                      controller.authService.user.value?.id;
-                  final bubbleColor = isMe
-                      ? const Color(0xFFEFEFEF)
-                      : const Color(0xFFE6F2E6);
-                  final align = isMe
-                      ? MainAxisAlignment.end
-                      : MainAxisAlignment.start;
+                    final isMe =
+                        msg.senderId == controller.authService.user.value?.id;
+                    final bubbleColor = isMe
+                        ? const Color(0xFFEFEFEF)
+                        : const Color(0xFFE6F2E6);
+                    final align = isMe
+                        ? MainAxisAlignment.end
+                        : MainAxisAlignment.start;
 
-                  return Column(
-                    crossAxisAlignment: isMe
-                        ? CrossAxisAlignment.end
-                        : CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: align,
-                        children: [
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: bubbleColor,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                msgs[index].message,
-                                style: const TextStyle(fontSize: 13),
+                    return Column(
+                      crossAxisAlignment: isMe
+                          ? CrossAxisAlignment.end
+                          : CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: align,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: bubbleColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  msg.message,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('h:mm a').format(
-                          DateTime.fromMillisecondsSinceEpoch(
-                            msgs[index].messageTime * 1000,
-                          ),
+                          ],
                         ),
-                        style: TextStyle(fontSize: 11, color: Colors.grey),
-                      ),
-                    ],
-                  );
-                },
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 10),
-                itemCount: msgs.length,
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('h:mm a').format(
+                            DateTime.fromMillisecondsSinceEpoch(
+                              msg.messageTime,
+                            ),
+                          ),
+                          style: TextStyle(fontSize: 11, color: Colors.grey),
+                        ),
+                      ],
+                    );
+                  },
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
+                  itemCount: messages.length,
+                ),
+              ),
+              _InputBar(),
+            ],
+          );
+        },
+        onLoading: const Center(child: CircularProgressIndicator()),
+
+        onEmpty: Column(
+          children: const [
+            SizedBox(height: 16),
+            Expanded(
+              child: Center(
+                child: Text(
+                  'No messages yet',
+                  style: TextStyle(color: Colors.grey),
+                ),
               ),
             ),
-
             _InputBar(),
           ],
-        );
-      }),
+        ),
+        onError: (err) => Column(
+          children: [
+            const SizedBox(height: 16),
+            Expanded(
+              child: Center(
+                child: Text(
+                  'Error loading chat',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ),
+            const _InputBar(),
+          ],
+        ),
+      ),
     );
   }
 }

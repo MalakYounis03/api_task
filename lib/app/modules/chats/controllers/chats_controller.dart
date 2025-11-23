@@ -5,14 +5,12 @@ import 'dart:async';
 
 import 'package:intl/intl.dart';
 
-class ChatsController extends GetxController {
+class ChatsController extends GetxController with StateMixin<List<Chat>> {
   final db = FirebaseDatabase.instance.ref();
 
   final authService = Get.find<AuthService>();
 
-  final chats = <Chat>[].obs;
-
-  final isLoading = false.obs;
+  final chats = <Chat>[];
 
   StreamSubscription<DatabaseEvent>? _ref1;
   StreamSubscription<DatabaseEvent>? _ref2;
@@ -28,12 +26,11 @@ class ChatsController extends GetxController {
   }
 
   void _listenToChats(String userId) async {
-    isLoading.value = true;
-
-    final event = await db
+    change(null, status: RxStatus.loading());
+    final ref = db
         .child("list-of-chats/$userId")
-        .orderByChild('lastMessageTime')
-        .once(DatabaseEventType.value);
+        .orderByChild('lastMessageTime');
+    final event = await ref.once(DatabaseEventType.value);
 
     final childrens = event.snapshot.children.toList().reversed.toList();
 
@@ -44,40 +41,37 @@ class ChatsController extends GetxController {
       chats.add(chat);
     }
 
-    isLoading.value = false;
+    if (chats.isEmpty) {
+      change(<Chat>[], status: RxStatus.empty());
+    } else {
+      change(chats, status: RxStatus.success());
+    }
+    _ref1 = ref.onChildChanged.listen((event) {
+      final key = event.snapshot.key ?? '';
+      final json = event.snapshot.value as Map<dynamic, dynamic>;
+      final chat = Chat.fromJson(key, json);
 
-    _ref1 = db
-        .child("list-of-chats/$userId")
-        .orderByChild('lastMessageTime')
-        .onChildChanged
-        .listen((event) {
-          final key = event.snapshot.key ?? '';
-          final json = event.snapshot.value as Map<dynamic, dynamic>;
-          final chat = Chat.fromJson(key, json);
+      chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
 
-          chats.removeWhere(
-            (element) => element.otherUserId == chat.otherUserId,
-          );
+      chats.insert(0, chat);
+      change(chats, status: RxStatus.success());
+    });
+    final lastTime = chats.firstOrNull?.lastMessageTime;
+    Query query = ref;
+    if (lastTime != null) {
+      query = ref.startAt(lastTime + 1);
+    }
 
-          chats.insert(0, chat);
-        });
+    _ref2 = query.onChildAdded.listen((event) {
+      final key = event.snapshot.key ?? '';
+      final json = event.snapshot.value as Map<dynamic, dynamic>;
+      final chat = Chat.fromJson(key, json);
 
-    _ref2 = db
-        .child("list-of-chats/$userId")
-        .orderByChild('lastMessageTime')
-        .startAfter(key: 'lastMessageTime', chats.firstOrNull?.lastMessageTime)
-        .onChildAdded
-        .listen((event) {
-          final key = event.snapshot.key ?? '';
-          final json = event.snapshot.value as Map<dynamic, dynamic>;
-          final chat = Chat.fromJson(key, json);
+      chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
 
-          chats.removeWhere(
-            (element) => element.otherUserId == chat.otherUserId,
-          );
-
-          chats.insert(0, chat);
-        });
+      chats.insert(0, chat);
+      change(chats, status: RxStatus.success());
+    });
   }
 
   @override
@@ -99,13 +93,13 @@ class Chat {
   String get formattedTime {
     return DateFormat(
       'hh:mm a',
-    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
+    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime));
   }
 
   String get formattedDate {
     return DateFormat(
       'MMM d',
-    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
+    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime));
   }
 
   Chat({

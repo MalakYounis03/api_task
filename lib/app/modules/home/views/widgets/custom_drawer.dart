@@ -62,6 +62,37 @@ class CustomDrawer extends GetView<HomeController> {
               Get.toNamed(Routes.users);
             },
           ),
+          Spacer(),
+          InkWell(
+            onTap: () async {
+              final authService = Get.find<AuthService>();
+              await authService.logout();
+              Get.offAllNamed(Routes.login);
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24, width: 1),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.logout, color: Colors.redAccent, size: 22),
+                  SizedBox(width: 10),
+                  Text(
+                    "Logout",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -6,7 +6,8 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-class ChatDetailsController extends GetxController {
+class ChatDetailsController extends GetxController
+    with StateMixin<List<ChatMessage>> {
   final db = FirebaseDatabase.instance.ref();
   final authService = Get.find<AuthService>();
 
@@ -19,11 +20,7 @@ class ChatDetailsController extends GetxController {
 
   final Chat chat = Get.arguments['chat'];
 
-  final messages = <ChatMessage>[].obs;
-
-  final isLoading = false.obs;
-
-  final ScrollController scrollController = ScrollController();
+  final List<ChatMessage> messages = [];
 
   @override
   void onInit() async {
@@ -31,51 +28,48 @@ class ChatDetailsController extends GetxController {
 
     chatId = buildChatId(user.id, chat.otherUserId);
 
-    await _fetchMessages();
-    _listenToNewMessages();
+    _listenToMessages();
   }
 
-  Future<void> _fetchMessages() async {
-    isLoading.value = true;
-
-    try {
-      final event = await db
-          .child("chat-details/$chatId/messages")
-          .orderByChild('messageTime')
-          .once(DatabaseEventType.value);
-
-      final childs = event.snapshot.children.toList();
-
-      for (var child in childs) {
-        final message = ChatMessage.fromMap(
-          child.key ?? '',
-          child.value as Map<dynamic, dynamic>,
-        );
-        messages.add(message);
-      }
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  void _listenToNewMessages() {
-    _messagesSubscription = db
+  void _listenToMessages() {
+    change(null, status: RxStatus.loading());
+    final messagesRef = db
         .child("chat-details/$chatId/messages")
         .orderByChild('messageTime')
-        .startAfter(key: 'messageTime', messages.lastOrNull?.messageTime)
-        .onChildAdded
-        .listen((event) {
-          final msgData = event.snapshot.value as Map<dynamic, dynamic>;
+        .limitToLast(20);
 
-          final newMessage = ChatMessage.fromMap(
-            event.snapshot.key ?? '',
-            msgData,
-          );
+    // 1) أولاً: تحقق مرة واحدة هل في رسائل قديمة
+    messagesRef
+        .once(DatabaseEventType.value)
+        .then((event) {
+          // لو ما في ولا رسالة، snapshot.exists = false
+          if (!event.snapshot.exists) {
+            // ما في رسائل قديمة -> نطفي اللودينغ
 
-          messages.add(newMessage);
-
-          scrollToBottom();
+            change(<ChatMessage>[], status: RxStatus.empty());
+          }
+          // لو في رسائل، ما منعمل شي هون، لأن onChildAdded رح يضبط الأمور
+        })
+        .catchError((error) {
+          if (status == RxStatus.loading()) {
+            change(null, status: RxStatus.error(error.toString()));
+          }
         });
+
+    // 2) ثانياً: اسمع لكل الرسائل (القديمة + الجديدة)
+    _messagesSubscription = messagesRef.onChildAdded.listen(
+      (event) {
+        // هنا event.snapshot.exists دائماً true لأن في child حقيقي
+        final msgData = event.snapshot.value as Map<dynamic, dynamic>;
+        final message = ChatMessage.fromMap(event.snapshot.key ?? '', msgData);
+
+        messages.add(message);
+        change(List<ChatMessage>.from(messages), status: RxStatus.success());
+      },
+      onError: (error) {
+        change(null, status: RxStatus.error(error.toString()));
+      },
+    );
   }
 
   Future<void> sendMessages() async {
@@ -84,7 +78,7 @@ class ChatDetailsController extends GetxController {
     if (text.isEmpty) return;
 
     final newMessageRef = db.child("chat-details/$chatId/messages").push();
-    final newMessageTime = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final newMessageTime = DateTime.now().millisecondsSinceEpoch;
 
     messageController.clear();
 
@@ -111,8 +105,6 @@ class ChatDetailsController extends GetxController {
     });
   }
 
-  //
-
   String buildChatId(String id1, String id2) {
     final ids = [id1, id2];
     ids.sort();
@@ -120,24 +112,10 @@ class ChatDetailsController extends GetxController {
     return reversed.join('____');
   }
 
-  void scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!scrollController.hasClients) return;
-
-      final position = scrollController.position.maxScrollExtent;
-      scrollController.animateTo(
-        position,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-      );
-    });
-  }
-
   @override
   void onClose() {
     messageController.dispose();
     _messagesSubscription?.cancel();
-    scrollController.dispose();
     super.onClose();
   }
 }

@@ -17,57 +17,66 @@ class ChatsView extends GetView<ChatsController> {
 
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Color(0xFF443C42),
         title: Text('Chats'.tr, style: TextStyle(fontSize: 18)),
       ),
-      body: Obx(() {
-        final chats = controller.chats;
+      body: controller.obx(
+        (chat) {
+          final chats = chat ?? [];
 
-        if (controller.isLoading.value && chats.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+          return ListView.separated(
+            itemCount: chats.length,
+            padding: EdgeInsets.all(16),
+            separatorBuilder: (context, index) => SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final chat = chats[index];
 
-        if (chats.isEmpty) {
-          return const Center(child: Text("No chats yet"));
-        }
+              final String currentUserId = savedUser!.id;
+              final String senderName;
 
-        return ListView.separated(
-          itemCount: chats.length,
-          padding: EdgeInsets.all(16),
-          separatorBuilder: (context, index) => SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final chat = chats[index];
+              if (chat.lastMessageAuthor == currentUserId) {
+                senderName = "You";
+              } else {
+                senderName = chat.name;
+              }
 
-            final String currentUserId = savedUser!.id;
-            final String senderName;
-
-            if (chat.lastMessageAuthor == currentUserId) {
-              senderName = "You";
-            } else {
-              senderName = chat.name;
-            }
-
-            return Container(
-              clipBehavior: Clip.hardEdge,
-              decoration: BoxDecoration(
-                color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ListTile(
-                onTap: () => Get.toNamed(Routes.chatDetails, arguments: {"chat": chat}),
-                leading: CircleAvatar(backgroundImage: NetworkImage(chat.imageUrl)),
-                title: Text(chat.name),
-                subtitle: Text("$senderName: ${chat.lastMessage}"),
-                trailing: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [Text(chat.formattedTime), Text(chat.formattedDate)],
+              return Container(
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  color: Color(0xFFEBEBEB).withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-            );
-          },
-        );
-      }),
+                child: ListTile(
+                  onTap: () => Get.toNamed(
+                    Routes.chatDetails,
+                    arguments: {"chat": chat},
+                  ),
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(chat.imageUrl),
+                  ),
+                  title: Text(chat.name),
+                  subtitle: Text("$senderName: ${chat.lastMessage}"),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(chat.formattedTime),
+                      Text(chat.formattedDate),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
+        onLoading: const Center(child: CircularProgressIndicator()),
+        onEmpty: const Center(child: Text("No chats yet")),
+        onError: (err) => Center(
+          child: Text(
+            "Error loading chats",
+            style: const TextStyle(color: Colors.redAccent),
+          ),
+        ),
+      ),
     );
   }
 }
