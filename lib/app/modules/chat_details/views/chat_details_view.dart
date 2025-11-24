@@ -34,8 +34,7 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                   ),
                   physics: const BouncingScrollPhysics(),
                   itemBuilder: (context, index) {
-                    final msg =
-                        messages[messages.length - 1 - index]; // القراءة بالعكس
+                    final msg = messages[messages.length - 1 - index];
 
                     final isMe =
                         msg.senderId == controller.authService.user.value?.id;
@@ -46,6 +45,8 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                         ? MainAxisAlignment.end
                         : MainAxisAlignment.start;
 
+                    final isDeleted = msg.isDeleted;
+
                     return Column(
                       crossAxisAlignment: isMe
                           ? CrossAxisAlignment.end
@@ -55,18 +56,57 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                           mainAxisAlignment: align,
                           children: [
                             Flexible(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: bubbleColor,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  msg.message,
-                                  style: const TextStyle(fontSize: 13),
+                              child: GestureDetector(
+                                onLongPressStart: isMe && !isDeleted
+                                    ? (details) async {
+                                        final tapPosition =
+                                            details.globalPosition;
+
+                                        final value = await showMenu<String>(
+                                          context: context,
+                                          position: RelativeRect.fromLTRB(
+                                            tapPosition.dx - 130,
+                                            tapPosition.dy,
+                                            tapPosition.dx,
+                                            tapPosition.dy - 40,
+                                          ),
+                                          items: const [
+                                            PopupMenuItem(
+                                              value: 'delete',
+                                              child: Text('حذف الرسالة'),
+                                            ),
+                                          ],
+                                        );
+
+                                        if (value == 'delete') {
+                                          controller.deleteMessageForEveryone(
+                                            msg,
+                                          );
+                                        }
+                                      }
+                                    : null,
+
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: bubbleColor,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    isDeleted
+                                        ? 'تم حذف هذه الرسالة'
+                                        : msg.message,
+                                    style: isDeleted
+                                        ? const TextStyle(
+                                            fontSize: 13,
+                                            fontStyle: FontStyle.italic,
+                                            color: Colors.grey,
+                                          )
+                                        : const TextStyle(fontSize: 13),
+                                  ),
                                 ),
                               ),
                             ),

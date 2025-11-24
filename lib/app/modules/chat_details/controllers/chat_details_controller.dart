@@ -21,9 +21,10 @@ class ChatDetailsController extends GetxController
   final Chat chat = Get.arguments['chat'];
 
   final List<ChatMessage> messages = [];
+  StreamSubscription<DatabaseEvent>? _childChangedSub;
 
   @override
-  void onInit() async {
+  void onInit() {
     super.onInit();
 
     chatId = buildChatId(user.id, chat.otherUserId);
@@ -33,22 +34,18 @@ class ChatDetailsController extends GetxController
 
   void _listenToMessages() {
     change(null, status: RxStatus.loading());
-    final messagesRef = db
+
+    final messagesQuery = db
         .child("chat-details/$chatId/messages")
         .orderByChild('messageTime')
         .limitToLast(20);
 
-    // 1) أولاً: تحقق مرة واحدة هل في رسائل قديمة
-    messagesRef
+    messagesQuery
         .once(DatabaseEventType.value)
         .then((event) {
-          // لو ما في ولا رسالة، snapshot.exists = false
           if (!event.snapshot.exists) {
-            // ما في رسائل قديمة -> نطفي اللودينغ
-
             change(<ChatMessage>[], status: RxStatus.empty());
           }
-          // لو في رسائل، ما منعمل شي هون، لأن onChildAdded رح يضبط الأمور
         })
         .catchError((error) {
           if (status == RxStatus.loading()) {
@@ -56,10 +53,8 @@ class ChatDetailsController extends GetxController
           }
         });
 
-    // 2) ثانياً: اسمع لكل الرسائل (القديمة + الجديدة)
-    _messagesSubscription = messagesRef.onChildAdded.listen(
+    _messagesSubscription = messagesQuery.onChildAdded.listen(
       (event) {
-        // هنا event.snapshot.exists دائماً true لأن في child حقيقي
         final msgData = event.snapshot.value as Map<dynamic, dynamic>;
         final message = ChatMessage.fromMap(event.snapshot.key ?? '', msgData);
 
@@ -70,6 +65,16 @@ class ChatDetailsController extends GetxController
         change(null, status: RxStatus.error(error.toString()));
       },
     );
+    _childChangedSub = messagesQuery.onChildChanged.listen((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>;
+      final updatedMsg = ChatMessage.fromMap(event.snapshot.key ?? '', data);
+
+      final index = messages.indexWhere((m) => m.id == updatedMsg.id);
+      if (index != -1) {
+        messages[index] = updatedMsg;
+        change(List<ChatMessage>.from(messages), status: RxStatus.success());
+      }
+    });
   }
 
   Future<void> sendMessages() async {
@@ -112,10 +117,45 @@ class ChatDetailsController extends GetxController
     return reversed.join('____');
   }
 
+  Future<void> deleteMessageForEveryone(ChatMessage msg) async {
+    try {
+      await db.child("chat-details/$chatId/messages").child(msg.id).update({
+        'isDeleted': true,
+        'message': '',
+      });
+
+      await _updateLastMessageIfNeeded(msg);
+    } catch (e) {
+      Get.snackbar('خطأ', 'فشل حذف الرسالة');
+    }
+  }
+
+  Future<void> _updateLastMessageIfNeeded(ChatMessage msg) async {
+    final myId = user.id;
+    final otherId = chat.otherUserId;
+
+    final myChatRef = db.child("list-of-chats/$myId/$otherId");
+    final otherChatRef = db.child("list-of-chats/$otherId/$myId");
+
+    final snap = await myChatRef.get();
+    if (!snap.exists) return;
+
+    final data = snap.value as Map<dynamic, dynamic>;
+    final lastTime = data['lastMessageTime'] as int? ?? 0;
+
+    if (lastTime != msg.messageTime) return;
+
+    await myChatRef.update({'lastMessage': 'تم حذف هذه الرسالة'});
+
+    await otherChatRef.update({'lastMessage': 'تم حذف هذه الرسالة'});
+  }
+
   @override
   void onClose() {
     messageController.dispose();
     _messagesSubscription?.cancel();
+    _childChangedSub?.cancel();
+
     super.onClose();
   }
 }
