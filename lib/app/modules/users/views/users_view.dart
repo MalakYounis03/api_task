@@ -1,3 +1,4 @@
+import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
 import 'package:api_task/app/routes/app_pages.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -14,11 +15,7 @@ class UsersView extends GetView<UsersController> {
     final savedUser = authService.user.value;
     final currentUserId = savedUser!.id;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('All Users'),
-        centerTitle: true,
-        backgroundColor: Color(0xFF443C42),
-      ),
+      appBar: AppBar(title: const Text('All Users'), centerTitle: true, backgroundColor: Color(0xFF443C42)),
       body: SafeArea(
         child: Obx(() {
           final items = controller.users;
@@ -51,19 +48,9 @@ class UsersView extends GetView<UsersController> {
                         Get.snackbar('Info', 'You cannot chat with yourself');
                         return;
                       }
-
-                      Get.toNamed(
-                        Routes.chatDetails,
-                        arguments: {
-                          "otherUserId": user.id,
-                          "name": user.username,
-                          "imageUrl": user.imageUrl,
-                        },
-                      );
+                      Get.toNamed(Routes.chatDetails, arguments: {"chat": ChatDetails.newChat(user)});
                     },
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(user.imageUrl),
-                    ),
+                    leading: CircleAvatar(backgroundImage: NetworkImage(user.imageUrl)),
                     title: Text(user.username),
                     subtitle: Text(user.email),
                   ),

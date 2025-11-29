@@ -1,3 +1,4 @@
+import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
 import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
 import 'package:api_task/app/routes/app_pages.dart';
 import 'package:api_task/app/service/auth_service.dart';
@@ -55,7 +56,7 @@ class ChatsView extends GetView<ChatsController> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: ListTile(
-                onTap: () => Get.toNamed(Routes.chatDetails, arguments: {"chat": chat}),
+                onTap: () => Get.toNamed(Routes.chatDetails, arguments: {"chat": ChatDetails.existChat(chat)}),
                 leading: CircleAvatar(backgroundImage: NetworkImage(chat.imageUrl)),
                 title: Text(chat.name),
                 subtitle: Text("$senderName: ${chat.lastMessage}"),

@@ -13,7 +13,7 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
       appBar: AppBar(
         backgroundColor: Color(0xFF443C42),
         iconTheme: IconThemeData(color: Colors.white),
-        title: Text(controller.chat.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        title: Text(controller.chat.otherUserName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: Obx(() {

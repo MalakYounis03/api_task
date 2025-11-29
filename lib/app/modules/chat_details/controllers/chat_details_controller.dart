@@ -1,5 +1,4 @@
 import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
-import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/widgets.dart';
@@ -17,7 +16,7 @@ class ChatDetailsController extends GetxController {
   late final user = authService.user.value!;
   late final String chatId;
 
-  final Chat chat = Get.arguments['chat'];
+  final ChatDetails chat = Get.arguments['chat'];
 
   final messages = <ChatMessage>[].obs;
 
@@ -86,20 +85,20 @@ class ChatDetailsController extends GetxController {
 
     await newMessageRef.set({"senderId": user.id, "message": text, "messageTime": newMessageTime});
 
-    await db.child("list-of-chats/${user.id}/${chat.lastMessageAuthor}").update({
+    await db.child("list-of-chats/${user.id}/${chat.otherUserId}").update({
+      "name": chat.otherUserName,
+      "imageUrl": chat.otherUserImageUrl,
       "lastMessage": text,
       "lastMessageTime": newMessageTime,
       "lastMessageAuthor": user.id,
-      "name": chat.name,
-      "imageUrl": chat.imageUrl,
     });
 
-    await db.child("list-of-chats/${chat.lastMessageAuthor}/${user.id}").update({
+    await db.child("list-of-chats/${chat.otherUserId}/${user.id}").update({
+      "name": user.username,
+      "imageUrl": user.imageUrl,
       "lastMessage": text,
       "lastMessageTime": newMessageTime,
       "lastMessageAuthor": user.id,
-      "name": user.username,
-      "imageUrl": user.imageUrl,
     });
   }
 

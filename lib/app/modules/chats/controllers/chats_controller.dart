@@ -10,27 +10,27 @@ class ChatsController extends GetxController {
 
   final authService = Get.find<AuthService>();
 
+  late final savedUser = authService.user.value!;
+
   final chats = <Chat>[].obs;
 
   final isLoading = false.obs;
 
-  StreamSubscription<DatabaseEvent>? _ref1;
-  StreamSubscription<DatabaseEvent>? _ref2;
+  StreamSubscription<DatabaseEvent>? _ref;
 
   @override
-  void onInit() {
+  onInit() {
     super.onInit();
-    final savedUser = authService.user.value;
-
-    if (savedUser != null) {
-      _listenToChats(savedUser.id);
-    }
+    getChats();
   }
 
-  void _listenToChats(String userId) async {
+  getChats() async {
     isLoading.value = true;
 
-    final event = await db.child("list-of-chats/$userId").orderByChild('lastMessageTime').once(DatabaseEventType.value);
+    final event = await db
+        .child("list-of-chats/${savedUser.id}")
+        .orderByChild('lastMessageTime')
+        .once(DatabaseEventType.value);
 
     final childrens = event.snapshot.children.toList().reversed.toList();
 
@@ -43,36 +43,39 @@ class ChatsController extends GetxController {
 
     isLoading.value = false;
 
-    _ref1 = db.child("list-of-chats/$userId").orderByChild('lastMessageTime').onChildChanged.listen((event) {
-      final key = event.snapshot.key ?? '';
-      final json = event.snapshot.value as Map<dynamic, dynamic>;
-      final chat = Chat.fromJson(key, json);
+    listenForUpdates();
+  }
 
-      chats.removeWhere((element) => element.lastMessageAuthor == chat.lastMessageAuthor);
+  listenForUpdates() {
+    //
 
-      chats.insert(0, chat);
-    });
+    _ref?.cancel();
 
-    _ref2 = db
-        .child("list-of-chats/$userId")
+    _ref = db
+        .child("list-of-chats/${savedUser.id}")
         .orderByChild('lastMessageTime')
         .startAfter(key: 'lastMessageTime', chats.firstOrNull?.lastMessageTime)
         .onChildAdded
         .listen((event) {
+          //
+
+          print('onChildAdded');
+
           final key = event.snapshot.key ?? '';
           final json = event.snapshot.value as Map<dynamic, dynamic>;
           final chat = Chat.fromJson(key, json);
 
-          chats.removeWhere((element) => element.lastMessageAuthor == chat.lastMessageAuthor);
+          chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
 
           chats.insert(0, chat);
+
+          listenForUpdates();
         });
   }
 
   @override
   void onClose() {
-    _ref1?.cancel();
-    _ref2?.cancel();
+    _ref?.cancel();
     super.onClose();
   }
 }
@@ -80,10 +83,10 @@ class ChatsController extends GetxController {
 class Chat {
   String name;
   String imageUrl;
-  String lastMessage;
-  int lastMessageTime;
-  String lastMessageAuthor;
   String otherUserId;
+  String lastMessage;
+  String lastMessageAuthor;
+  int lastMessageTime;
 
   String get formattedTime {
     return DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
@@ -96,20 +99,20 @@ class Chat {
   Chat({
     required this.name,
     required this.imageUrl,
+    required this.otherUserId,
     required this.lastMessage,
     required this.lastMessageTime,
     required this.lastMessageAuthor,
-    required this.otherUserId,
   });
 
   factory Chat.fromJson(String key, Map<dynamic, dynamic> json) {
     return Chat(
       name: json['name'],
       imageUrl: json['imageUrl'],
+      otherUserId: key,
       lastMessage: json['lastMessage'],
       lastMessageTime: json['lastMessageTime'],
       lastMessageAuthor: json['lastMessageAuthor'],
-      otherUserId: key,
     );
   }
 }
