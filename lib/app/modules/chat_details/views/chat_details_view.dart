@@ -45,8 +45,6 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                         ? MainAxisAlignment.end
                         : MainAxisAlignment.start;
 
-                    final isDeleted = msg.isDeleted;
-
                     return Column(
                       crossAxisAlignment: isMe
                           ? CrossAxisAlignment.end
@@ -57,7 +55,7 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                           children: [
                             Flexible(
                               child: GestureDetector(
-                                onLongPressStart: isMe && !isDeleted
+                                onLongPressStart: isMe
                                     ? (details) async {
                                         final tapPosition =
                                             details.globalPosition;
@@ -96,16 +94,8 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
-                                    isDeleted
-                                        ? 'تم حذف هذه الرسالة'
-                                        : msg.message,
-                                    style: isDeleted
-                                        ? const TextStyle(
-                                            fontSize: 13,
-                                            fontStyle: FontStyle.italic,
-                                            color: Colors.grey,
-                                          )
-                                        : const TextStyle(fontSize: 13),
+                                    msg.message,
+                                    style: const TextStyle(fontSize: 13),
                                   ),
                                 ),
                               ),

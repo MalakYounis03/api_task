@@ -14,6 +14,7 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
 
   StreamSubscription<DatabaseEvent>? _ref1;
   StreamSubscription<DatabaseEvent>? _ref2;
+  StreamSubscription<DatabaseEvent>? _ref3;
 
   @override
   void onInit() {
@@ -40,21 +41,19 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
       final chat = Chat.fromJson(key, json);
       chats.add(chat);
     }
-
     if (chats.isEmpty) {
       change(<Chat>[], status: RxStatus.empty());
     } else {
-      change(chats, status: RxStatus.success());
+      change(List<Chat>.from(chats), status: RxStatus.success());
     }
+
     _ref1 = ref.onChildChanged.listen((event) {
       final key = event.snapshot.key ?? '';
       final json = event.snapshot.value as Map<dynamic, dynamic>;
       final chat = Chat.fromJson(key, json);
-
       chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
-
       chats.insert(0, chat);
-      change(chats, status: RxStatus.success());
+      change(List<Chat>.from(chats), status: RxStatus.success());
     });
     final lastTime = chats.firstOrNull?.lastMessageTime;
     Query query = ref;
@@ -68,9 +67,18 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
       final chat = Chat.fromJson(key, json);
 
       chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
-
       chats.insert(0, chat);
-      change(chats, status: RxStatus.success());
+      change(List<Chat>.from(chats), status: RxStatus.success());
+    });
+    _ref3 = ref.onChildRemoved.listen((event) {
+      final key = event.snapshot.key ?? '';
+      chats.removeWhere((c) => c.otherUserId == key);
+
+      if (chats.isEmpty) {
+        change(<Chat>[], status: RxStatus.empty());
+      } else {
+        change(List<Chat>.from(chats), status: RxStatus.success());
+      }
     });
   }
 
@@ -78,6 +86,7 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
   void onClose() {
     _ref1?.cancel();
     _ref2?.cancel();
+    _ref3?.cancel();
     super.onClose();
   }
 }

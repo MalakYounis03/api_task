@@ -14,6 +14,7 @@ class ChatDetailsController extends GetxController
   final messageController = TextEditingController();
 
   StreamSubscription<DatabaseEvent>? _messagesSubscription;
+  StreamSubscription<DatabaseEvent>? _childRemovedSub;
 
   late final user = authService.user.value!;
   late final String chatId;
@@ -37,8 +38,7 @@ class ChatDetailsController extends GetxController
 
     final messagesQuery = db
         .child("chat-details/$chatId/messages")
-        .orderByChild('messageTime')
-        .limitToLast(20);
+        .orderByChild('messageTime');
 
     messagesQuery
         .once(DatabaseEventType.value)
@@ -72,6 +72,18 @@ class ChatDetailsController extends GetxController
       final index = messages.indexWhere((m) => m.id == updatedMsg.id);
       if (index != -1) {
         messages[index] = updatedMsg;
+        change(List<ChatMessage>.from(messages), status: RxStatus.success());
+      }
+    });
+    _childRemovedSub = messagesQuery.onChildRemoved.listen((event) {
+      final msgId = event.snapshot.key;
+      if (msgId == null) return;
+
+      messages.removeWhere((m) => m.id == msgId);
+
+      if (messages.isEmpty) {
+        change(<ChatMessage>[], status: RxStatus.empty());
+      } else {
         change(List<ChatMessage>.from(messages), status: RxStatus.success());
       }
     });
@@ -118,36 +130,51 @@ class ChatDetailsController extends GetxController
   }
 
   Future<void> deleteMessageForEveryone(ChatMessage msg) async {
-    try {
-      await db.child("chat-details/$chatId/messages").child(msg.id).update({
-        'isDeleted': true,
-        'message': '',
-      });
+    final messageRef = db.child("chat-details/$chatId/messages/${msg.id}");
 
-      await _updateLastMessageIfNeeded(msg);
-    } catch (e) {
-      Get.snackbar('خطأ', 'فشل حذف الرسالة');
-    }
+    await messageRef.remove();
+    await _updateLastMessageAfterDelete(msg);
   }
 
-  Future<void> _updateLastMessageIfNeeded(ChatMessage msg) async {
+  Future<void> _updateLastMessageAfterDelete(ChatMessage deletedMsg) async {
     final myId = user.id;
     final otherId = chat.otherUserId;
 
     final myChatRef = db.child("list-of-chats/$myId/$otherId");
     final otherChatRef = db.child("list-of-chats/$otherId/$myId");
 
-    final snap = await myChatRef.get();
-    if (!snap.exists) return;
+    final headerSnap = await myChatRef.get();
+    if (!headerSnap.exists) return;
 
-    final data = snap.value as Map<dynamic, dynamic>;
-    final lastTime = data['lastMessageTime'] as int? ?? 0;
+    final messagesRef = db.child("chat-details/$chatId/messages");
 
-    if (lastTime != msg.messageTime) return;
+    final lastMsgEvent = await messagesRef
+        .orderByChild('messageTime')
+        .limitToLast(1)
+        .once(DatabaseEventType.value);
 
-    await myChatRef.update({'lastMessage': 'تم حذف هذه الرسالة'});
+    if (!lastMsgEvent.snapshot.exists) {
+      await myChatRef.remove();
+      await otherChatRef.remove();
+      return;
+    }
 
-    await otherChatRef.update({'lastMessage': 'تم حذف هذه الرسالة'});
+    final raw = lastMsgEvent.snapshot.value as Map<dynamic, dynamic>;
+    final lastEntry = raw.entries.first;
+    final lastMsgData = lastEntry.value as Map<dynamic, dynamic>;
+
+    final String lastText = lastMsgData['message'] as String? ?? '';
+    final String lastSenderId = lastMsgData['senderId'] as String? ?? '';
+    final int lastTime = lastMsgData['messageTime'] as int? ?? 0;
+
+    final updateData = {
+      'lastMessage': lastText,
+      'lastMessageAuthor': lastSenderId,
+      'lastMessageTime': lastTime,
+    };
+
+    await myChatRef.update(updateData);
+    await otherChatRef.update(updateData);
   }
 
   @override
@@ -155,6 +182,7 @@ class ChatDetailsController extends GetxController
     messageController.dispose();
     _messagesSubscription?.cancel();
     _childChangedSub?.cancel();
+    _childRemovedSub?.cancel();
 
     super.onClose();
   }
