@@ -1,3 +1,4 @@
+import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
 import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
 import 'package:api_task/app/routes/app_pages.dart';
 import 'package:api_task/app/service/auth_service.dart';
@@ -49,8 +50,9 @@ class ChatsView extends GetView<ChatsController> {
                 child: ListTile(
                   onTap: () => Get.toNamed(
                     Routes.chatDetails,
-                    arguments: {"chat": chat},
+                    arguments: {"chat": ChatDetails.existChat(chat)},
                   ),
+
                   leading: CircleAvatar(
                     backgroundImage: NetworkImage(chat.imageUrl),
                   ),

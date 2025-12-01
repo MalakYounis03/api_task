@@ -1,4 +1,4 @@
-import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
+import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
 import 'package:api_task/app/routes/app_pages.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:flutter/material.dart';
@@ -52,19 +52,9 @@ class UsersView extends GetView<UsersController> {
                         Get.snackbar('Info', 'You cannot chat with yourself');
                         return;
                       }
-
-                      final chat = Chat(
-                        name: user.username,
-                        imageUrl: user.imageUrl,
-                        lastMessage: '',
-                        lastMessageTime: 0,
-                        lastMessageAuthor: savedUser.id,
-                        otherUserId: user.id,
-                      );
-
                       Get.toNamed(
                         Routes.chatDetails,
-                        arguments: {"chat": chat},
+                        arguments: {"chat": ChatDetails.newChat(user)},
                       );
                     },
                     leading: CircleAvatar(

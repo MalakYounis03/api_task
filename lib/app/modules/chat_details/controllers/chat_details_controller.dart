@@ -1,5 +1,4 @@
 import 'package:api_task/app/modules/chat_details/model/chat_details_model.dart';
-import 'package:api_task/app/modules/chats/controllers/chats_controller.dart';
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/widgets.dart';
@@ -19,7 +18,7 @@ class ChatDetailsController extends GetxController
   late final user = authService.user.value!;
   late final String chatId;
 
-  final Chat chat = Get.arguments['chat'];
+  final ChatDetails chat = Get.arguments['chat'];
 
   final List<ChatMessage> messages = [];
   StreamSubscription<DatabaseEvent>? _childChangedSub;
@@ -109,8 +108,8 @@ class ChatDetailsController extends GetxController
       "lastMessage": text,
       "lastMessageTime": newMessageTime,
       "lastMessageAuthor": user.id,
-      "name": chat.name,
-      "imageUrl": chat.imageUrl,
+      "name": chat.otherUserName,
+      "imageUrl": chat.otherUserImageUrl,
     });
 
     await db.child("list-of-chats/${chat.otherUserId}/${user.id}").update({

@@ -9,32 +9,28 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
   final db = FirebaseDatabase.instance.ref();
 
   final authService = Get.find<AuthService>();
+  late final savedUser = authService.user.value;
 
   final chats = <Chat>[];
 
-  StreamSubscription<DatabaseEvent>? _ref1;
-  StreamSubscription<DatabaseEvent>? _ref2;
-  StreamSubscription<DatabaseEvent>? _ref3;
+  StreamSubscription<DatabaseEvent>? _ref;
+  StreamSubscription<DatabaseEvent>? _changedSub;
+  StreamSubscription<DatabaseEvent>? _removedSub;
 
   @override
   void onInit() {
     super.onInit();
-    final savedUser = authService.user.value;
-
-    if (savedUser != null) {
-      _listenToChats(savedUser.id);
-    }
+    getChats();
   }
 
-  void _listenToChats(String userId) async {
+  getChats() async {
     change(null, status: RxStatus.loading());
-    final ref = db
-        .child("list-of-chats/$userId")
-        .orderByChild('lastMessageTime');
-    final event = await ref.once(DatabaseEventType.value);
+    final event = await db
+        .child("list-of-chats/${savedUser!.id}")
+        .orderByChild('lastMessageTime')
+        .once(DatabaseEventType.value);
 
     final childrens = event.snapshot.children.toList().reversed.toList();
-
     for (var snapshot in childrens) {
       final key = snapshot.key ?? '';
       final json = snapshot.value as Map<dynamic, dynamic>;
@@ -46,31 +42,58 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
     } else {
       change(List<Chat>.from(chats), status: RxStatus.success());
     }
+    listenForUpdates();
+  }
 
-    _ref1 = ref.onChildChanged.listen((event) {
+  listenForUpdates() {
+    _ref?.cancel();
+    final ref = db
+        .child("list-of-chats/${savedUser!.id}")
+        .orderByChild('lastMessageTime');
+    _ref = ref
+        .startAfter(key: 'lastMessageTime', chats.firstOrNull?.lastMessageTime)
+        .onChildAdded
+        .listen((event) {
+          //
+
+          print('onChildAdded');
+
+          final key = event.snapshot.key ?? '';
+          final json = event.snapshot.value as Map<dynamic, dynamic>;
+          final chat = Chat.fromJson(key, json);
+
+          chats.removeWhere(
+            (element) => element.otherUserId == chat.otherUserId,
+          );
+
+          chats.insert(0, chat);
+          change(List<Chat>.from(chats), status: RxStatus.success());
+
+          listenForUpdates();
+        });
+
+    _changedSub = ref.onChildChanged.listen((event) {
       final key = event.snapshot.key ?? '';
-      final json = event.snapshot.value as Map<dynamic, dynamic>;
-      final chat = Chat.fromJson(key, json);
-      chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
-      chats.insert(0, chat);
+      final data = event.snapshot.value;
+      if (data == null) return;
+
+      final json = data as Map<dynamic, dynamic>;
+      final updatedChat = Chat.fromJson(key, json);
+      final index = chats.indexWhere(
+        (c) => c.otherUserId == updatedChat.otherUserId,
+      );
+      if (index != -1) {
+        chats[index] = updatedChat;
+      } else {
+        chats.add(updatedChat);
+      }
+
+      chats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+
       change(List<Chat>.from(chats), status: RxStatus.success());
     });
-    final lastTime = chats.firstOrNull?.lastMessageTime;
-    Query query = ref;
-    if (lastTime != null) {
-      query = ref.startAt(lastTime + 1);
-    }
 
-    _ref2 = query.onChildAdded.listen((event) {
-      final key = event.snapshot.key ?? '';
-      final json = event.snapshot.value as Map<dynamic, dynamic>;
-      final chat = Chat.fromJson(key, json);
-
-      chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
-      chats.insert(0, chat);
-      change(List<Chat>.from(chats), status: RxStatus.success());
-    });
-    _ref3 = ref.onChildRemoved.listen((event) {
+    _removedSub = ref.onChildRemoved.listen((event) {
       final key = event.snapshot.key ?? '';
       chats.removeWhere((c) => c.otherUserId == key);
 
@@ -84,9 +107,9 @@ class ChatsController extends GetxController with StateMixin<List<Chat>> {
 
   @override
   void onClose() {
-    _ref1?.cancel();
-    _ref2?.cancel();
-    _ref3?.cancel();
+    _ref?.cancel();
+    _changedSub?.cancel();
+    _removedSub?.cancel();
     super.onClose();
   }
 }
