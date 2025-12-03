@@ -12,6 +12,7 @@ class ChatDetailsController extends GetxController {
   final messageController = TextEditingController();
 
   StreamSubscription<DatabaseEvent>? _messagesSubscription;
+  StreamSubscription<DatabaseEvent>? _childRemovedSub;
 
   late final user = authService.user.value!;
   late final String chatId;
@@ -21,8 +22,6 @@ class ChatDetailsController extends GetxController {
   final messages = <ChatMessage>[].obs;
 
   final isLoading = false.obs;
-
-  final ScrollController scrollController = ScrollController();
 
   @override
   void onInit() async {
@@ -46,11 +45,12 @@ class ChatDetailsController extends GetxController {
       final childs = event.snapshot.children.toList();
 
       for (var child in childs) {
-        final message = ChatMessage.fromMap(child.key ?? '', child.value as Map<dynamic, dynamic>);
+        final message = ChatMessage.fromMap(
+          child.key ?? '',
+          child.value as Map<dynamic, dynamic>,
+        );
         messages.add(message);
       }
-
-      scrollToBottom();
     } finally {
       isLoading.value = false;
     }
@@ -65,11 +65,22 @@ class ChatDetailsController extends GetxController {
         .listen((event) {
           final msgData = event.snapshot.value as Map<dynamic, dynamic>;
 
-          final newMessage = ChatMessage.fromMap(event.snapshot.key ?? '', msgData);
+          final newMessage = ChatMessage.fromMap(
+            event.snapshot.key ?? '',
+            msgData,
+          );
 
           messages.add(newMessage);
+        });
+    _childRemovedSub = db
+        .child("chat-details/$chatId/messages")
+        .orderByChild('messageTime')
+        .onChildRemoved
+        .listen((event) {
+          final msgId = event.snapshot.key;
+          if (msgId == null) return;
 
-          scrollToBottom();
+          messages.removeWhere((m) => m.id == msgId);
         });
   }
 
@@ -83,7 +94,11 @@ class ChatDetailsController extends GetxController {
 
     messageController.clear();
 
-    await newMessageRef.set({"senderId": user.id, "message": text, "messageTime": newMessageTime});
+    await newMessageRef.set({
+      "senderId": user.id,
+      "message": text,
+      "messageTime": newMessageTime,
+    });
 
     await db.child("list-of-chats/${user.id}/${chat.otherUserId}").update({
       "name": chat.otherUserName,
@@ -111,19 +126,53 @@ class ChatDetailsController extends GetxController {
     return reversed.join('____');
   }
 
-  void scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!scrollController.hasClients) return;
+  Future<void> deleteMessageForEveryone(ChatMessage msg) async {
+    final messageRef = db.child("chat-details/$chatId/messages/${msg.id}");
 
-      final position = scrollController.position.maxScrollExtent;
-      scrollController.animateTo(position, duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
-    });
+    await messageRef.remove();
+    await _updateLastMessageAfterDelete(msg);
+  }
+
+  Future<void> _updateLastMessageAfterDelete(ChatMessage deletedMsg) async {
+    final myId = user.id;
+    final otherId = chat.otherUserId;
+
+    final myChatRef = db.child("list-of-chats/$myId/$otherId");
+    final otherChatRef = db.child("list-of-chats/$otherId/$myId");
+
+    final messagesRef = db.child("chat-details/$chatId/messages");
+
+    final lastMsgEvent = await messagesRef
+        .orderByChild('messageTime')
+        .limitToLast(1)
+        .once(DatabaseEventType.value);
+
+    if (!lastMsgEvent.snapshot.exists) {
+      await myChatRef.remove();
+      await otherChatRef.remove();
+      return;
+    }
+    final lastSnap = lastMsgEvent.snapshot;
+
+    final DataSnapshot msgSnap = lastSnap.children.first;
+
+    final lastMsgData = msgSnap.value as Map<dynamic, dynamic>;
+
+    final updateData = {
+      'lastMessage': lastMsgData['message'] ?? '',
+      'lastMessageAuthor': lastMsgData['senderId'] ?? '',
+      'lastMessageTime': lastMsgData['messageTime'] ?? 0,
+    };
+
+    await myChatRef.update(updateData);
+    await otherChatRef.update(updateData);
   }
 
   @override
   void onClose() {
     messageController.dispose();
     _messagesSubscription?.cancel();
+    _childRemovedSub?.cancel();
     super.onClose();
   }
 }

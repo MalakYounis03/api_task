@@ -12,8 +12,10 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF443C42),
-        iconTheme: IconThemeData(color: Colors.white),
-        title: Text(controller.chat.otherUserName, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        title: Text(
+          controller.chat.otherUserName,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
       ),
       body: Obx(() {
@@ -27,42 +29,95 @@ class ChatDetailsView extends GetView<ChatDetailsController> {
             const SizedBox(height: 8),
             Expanded(
               child: ListView.separated(
-                controller: controller.scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                reverse: true,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 physics: const BouncingScrollPhysics(),
                 itemBuilder: (context, index) {
-                  final msgs = controller.messages;
+                  final msgs = controller
+                      .messages[controller.messages.length - 1 - index];
 
-                  final isMe = msgs[index].senderId == controller.authService.user.value?.id;
-                  final bubbleColor = isMe ? const Color(0xFFEFEFEF) : const Color(0xFFE6F2E6);
-                  final align = isMe ? MainAxisAlignment.end : MainAxisAlignment.start;
+                  final isMe =
+                      msgs.senderId == controller.authService.user.value?.id;
+                  final bubbleColor = isMe
+                      ? const Color(0xFFEFEFEF)
+                      : const Color(0xFFE6F2E6);
+                  final align = isMe
+                      ? MainAxisAlignment.end
+                      : MainAxisAlignment.start;
 
                   return Column(
-                    crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    crossAxisAlignment: isMe
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: align,
                         children: [
                           Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(color: bubbleColor, borderRadius: BorderRadius.circular(12)),
-                              child: Text(msgs[index].message, style: const TextStyle(fontSize: 13)),
+                            child: GestureDetector(
+                              onLongPressStart: isMe
+                                  ? (details) async {
+                                      final tapPosition =
+                                          details.globalPosition;
+
+                                      final value = await showMenu<String>(
+                                        context: context,
+                                        position: RelativeRect.fromLTRB(
+                                          tapPosition.dx - 130,
+                                          tapPosition.dy,
+                                          tapPosition.dx,
+                                          tapPosition.dy - 40,
+                                        ),
+                                        items: const [
+                                          PopupMenuItem(
+                                            value: 'delete',
+                                            child: Text('حذف الرسالة'),
+                                          ),
+                                        ],
+                                      );
+
+                                      if (value == 'delete') {
+                                        controller.deleteMessageForEveryone(
+                                          msgs,
+                                        );
+                                      }
+                                    }
+                                  : null,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: bubbleColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  msgs.message,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat(
-                          'h:mm a',
-                        ).format(DateTime.fromMillisecondsSinceEpoch(msgs[index].messageTime * 1000)),
+                        DateFormat('h:mm a').format(
+                          DateTime.fromMillisecondsSinceEpoch(
+                            msgs.messageTime * 1000,
+                          ),
+                        ),
                         style: TextStyle(fontSize: 11, color: Colors.grey),
                       ),
                     ],
                   );
                 },
-                separatorBuilder: (context, index) => const SizedBox(height: 10),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 10),
                 itemCount: msgs.length,
               ),
             ),
@@ -87,7 +142,13 @@ class _InputBar extends GetView<ChatDetailsController> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(26),
-          boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 10, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey,
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Row(
@@ -103,7 +164,10 @@ class _InputBar extends GetView<ChatDetailsController> {
             Expanded(
               child: TextField(
                 controller: controller.messageController,
-                decoration: InputDecoration(hintText: 'Write your message'.tr, border: InputBorder.none),
+                decoration: InputDecoration(
+                  hintText: 'Write your message'.tr,
+                  border: InputBorder.none,
+                ),
               ),
             ),
           ],

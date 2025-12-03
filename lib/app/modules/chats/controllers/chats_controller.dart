@@ -17,6 +17,8 @@ class ChatsController extends GetxController {
   final isLoading = false.obs;
 
   StreamSubscription<DatabaseEvent>? _ref;
+  StreamSubscription<DatabaseEvent>? _changedSub;
+  StreamSubscription<DatabaseEvent>? _removedSub;
 
   @override
   onInit() {
@@ -50,10 +52,10 @@ class ChatsController extends GetxController {
     //
 
     _ref?.cancel();
-
-    _ref = db
+    final ref = db
         .child("list-of-chats/${savedUser.id}")
-        .orderByChild('lastMessageTime')
+        .orderByChild('lastMessageTime');
+    _ref = ref
         .startAfter(key: 'lastMessageTime', chats.firstOrNull?.lastMessageTime)
         .onChildAdded
         .listen((event) {
@@ -65,17 +67,43 @@ class ChatsController extends GetxController {
           final json = event.snapshot.value as Map<dynamic, dynamic>;
           final chat = Chat.fromJson(key, json);
 
-          chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
+          chats.removeWhere(
+            (element) => element.otherUserId == chat.otherUserId,
+          );
 
           chats.insert(0, chat);
 
           listenForUpdates();
         });
+    _changedSub = ref.onChildChanged.listen((event) {
+      final key = event.snapshot.key ?? '';
+      final data = event.snapshot.value;
+      if (data == null) return;
+
+      final json = data as Map<dynamic, dynamic>;
+      final updatedChat = Chat.fromJson(key, json);
+      final index = chats.indexWhere(
+        (c) => c.otherUserId == updatedChat.otherUserId,
+      );
+      if (index != -1) {
+        chats[index] = updatedChat;
+      } else {
+        chats.add(updatedChat);
+      }
+
+      chats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+    });
+    _removedSub = ref.onChildRemoved.listen((event) {
+      final key = event.snapshot.key ?? '';
+      chats.removeWhere((c) => c.otherUserId == key);
+    });
   }
 
   @override
   void onClose() {
     _ref?.cancel();
+    _changedSub?.cancel();
+    _removedSub?.cancel();
     super.onClose();
   }
 }
@@ -89,11 +117,15 @@ class Chat {
   int lastMessageTime;
 
   String get formattedTime {
-    return DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
+    return DateFormat(
+      'hh:mm a',
+    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
   }
 
   String get formattedDate {
-    return DateFormat('MMM d').format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
+    return DateFormat(
+      'MMM d',
+    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
   }
 
   Chat({

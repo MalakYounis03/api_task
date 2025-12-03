@@ -1,7 +1,5 @@
 import 'package:api_task/app/data/post_model.dart';
 import 'package:api_task/app/modules/home/views/widgets/custom_drawer.dart';
-import 'package:api_task/app/service/auth_service.dart';
-import 'package:api_task/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/home_controller.dart';
@@ -15,27 +13,26 @@ class HomeView extends GetView<HomeController> {
       drawer: CustomDrawer(),
 
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Color(0xFF443C42),
         title: Text('Home'.tr, style: TextStyle(fontSize: 18)),
         actionsPadding: EdgeInsets.all(10),
 
-        actions: [
-          IconButton(
-            style: IconButton.styleFrom(
-              padding: EdgeInsets.all(0),
-              backgroundColor: Colors.white,
-              minimumSize: Size(32, 32),
-              fixedSize: Size(32, 32),
-            ),
-            icon: Icon(Icons.logout, size: 20, color: Color(0xff71B24D)),
-            onPressed: () async {
-              final authService = Get.find<AuthService>();
-              await authService.logout();
-              Get.offAllNamed(Routes.login);
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     style: IconButton.styleFrom(
+        //       padding: EdgeInsets.all(0),
+        //       backgroundColor: Colors.white,
+        //       minimumSize: Size(32, 32),
+        //       fixedSize: Size(32, 32),
+        //     ),
+        //     icon: Icon(Icons.logout, size: 20, color: Color(0xff71B24D)),
+        //     onPressed: () async {
+        //       final authService = Get.find<AuthService>();
+        //       await authService.logout();
+        //       Get.offAllNamed(Routes.login);
+        //     },
+        //   ),
+        // ],
       ),
       body: SafeArea(
         child: Obx(() {
