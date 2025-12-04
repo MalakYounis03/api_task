@@ -1,5 +1,6 @@
 import 'package:api_task/app/service/auth_service.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
@@ -16,9 +17,11 @@ class ChatsController extends GetxController {
 
   final isLoading = false.obs;
 
-  StreamSubscription<DatabaseEvent>? _ref;
+  StreamSubscription<DatabaseEvent>? _newMessageRef;
   StreamSubscription<DatabaseEvent>? _changedSub;
   StreamSubscription<DatabaseEvent>? _removedSub;
+
+  late final ref = db.child("list-of-chats/${savedUser.id}").orderByChild('lastMessageTime');
 
   @override
   onInit() {
@@ -45,36 +48,35 @@ class ChatsController extends GetxController {
 
     isLoading.value = false;
 
-    listenForUpdates();
+    listenForNew();
+    listenForChanges();
   }
 
-  listenForUpdates() {
+  listenForNew() {
     //
 
-    _ref?.cancel();
-    final ref = db
-        .child("list-of-chats/${savedUser.id}")
-        .orderByChild('lastMessageTime');
-    _ref = ref
-        .startAfter(key: 'lastMessageTime', chats.firstOrNull?.lastMessageTime)
-        .onChildAdded
-        .listen((event) {
-          //
+    _newMessageRef?.cancel();
 
-          print('onChildAdded');
+    _newMessageRef = ref.startAfter(key: 'lastMessageTime', chats.firstOrNull?.lastMessageTime).onChildAdded.listen((
+      event,
+    ) {
+      //
 
-          final key = event.snapshot.key ?? '';
-          final json = event.snapshot.value as Map<dynamic, dynamic>;
-          final chat = Chat.fromJson(key, json);
+      print('onChildAdded');
 
-          chats.removeWhere(
-            (element) => element.otherUserId == chat.otherUserId,
-          );
+      final key = event.snapshot.key ?? '';
+      final json = event.snapshot.value as Map<dynamic, dynamic>;
+      final chat = Chat.fromJson(key, json);
 
-          chats.insert(0, chat);
+      chats.removeWhere((element) => element.otherUserId == chat.otherUserId);
 
-          listenForUpdates();
-        });
+      chats.insert(0, chat);
+
+      listenForNew();
+    });
+  }
+
+  listenForChanges() {
     _changedSub = ref.onChildChanged.listen((event) {
       final key = event.snapshot.key ?? '';
       final data = event.snapshot.value;
@@ -82,9 +84,8 @@ class ChatsController extends GetxController {
 
       final json = data as Map<dynamic, dynamic>;
       final updatedChat = Chat.fromJson(key, json);
-      final index = chats.indexWhere(
-        (c) => c.otherUserId == updatedChat.otherUserId,
-      );
+      final index = chats.indexWhere((c) => c.otherUserId == updatedChat.otherUserId);
+
       if (index != -1) {
         chats[index] = updatedChat;
       } else {
@@ -93,6 +94,7 @@ class ChatsController extends GetxController {
 
       chats.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
     });
+
     _removedSub = ref.onChildRemoved.listen((event) {
       final key = event.snapshot.key ?? '';
       chats.removeWhere((c) => c.otherUserId == key);
@@ -101,7 +103,7 @@ class ChatsController extends GetxController {
 
   @override
   void onClose() {
-    _ref?.cancel();
+    _newMessageRef?.cancel();
     _changedSub?.cancel();
     _removedSub?.cancel();
     super.onClose();
@@ -117,15 +119,11 @@ class Chat {
   int lastMessageTime;
 
   String get formattedTime {
-    return DateFormat(
-      'hh:mm a',
-    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
+    return DateFormat('hh:mm a').format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
   }
 
   String get formattedDate {
-    return DateFormat(
-      'MMM d',
-    ).format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
+    return DateFormat('MMM d').format(DateTime.fromMillisecondsSinceEpoch(lastMessageTime * 1000));
   }
 
   Chat({
